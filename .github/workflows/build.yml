@@ -47,13 +47,23 @@ jobs:
                   <!DOCTYPE html>
                   <html>
                   <head>
+                      <meta charset="UTF-8">
                       <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+                      <title>小小怨AI</title>
                       <style>
-                          * { margin: 0; padding: 0; box-sizing: border-box; }
-                          body { font-family: system-ui; background: #f0fdfa; height: 100vh; overflow: hidden; display: flex; }
-                          /* 左侧边栏 20% */
+                          * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+                          body {
+                              font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                              background: #f0fdfa;
+                              height: 100vh;
+                              overflow: hidden;
+                              display: flex;
+                              position: relative;
+                          }
+                          /* 左侧边栏 */
                           .sidebar {
                               width: 20%;
+                              min-width: 120px;
                               background: #e2f5f3;
                               border-right: 1px solid #ccc;
                               padding: 16px;
@@ -61,7 +71,24 @@ jobs:
                               flex-direction: column;
                               gap: 16px;
                               overflow-y: auto;
+                              transition: width 0.2s ease, padding 0.2s ease, min-width 0.2s ease;
+                              z-index: 10;
                           }
+                          .sidebar.collapsed {
+                              width: 0;
+                              min-width: 0;
+                              padding: 0;
+                              overflow: hidden;
+                          }
+                          /* 右侧聊天区域 */
+                          .chat-container {
+                              flex: 1;
+                              display: flex;
+                              flex-direction: column;
+                              height: 100vh;
+                              transition: flex 0.2s ease;
+                          }
+                          /* 头像、设备信息等 */
                           .avatar {
                               text-align: center;
                           }
@@ -74,7 +101,7 @@ jobs:
                               display: flex;
                               align-items: center;
                               justify-content: center;
-                              font-size: 32px;
+                              font-size: 40px;
                               margin: 0 auto 8px;
                               cursor: pointer;
                               overflow: hidden;
@@ -102,15 +129,9 @@ jobs:
                               border-bottom: 1px solid #eee;
                               padding: 4px 0;
                               font-family: monospace;
+                              font-size: 11px;
                           }
-                          /* 右侧聊天区域 80% */
-                          .chat-container {
-                              width: 80%;
-                              display: flex;
-                              flex-direction: column;
-                              height: 100vh;
-                              position: relative;
-                          }
+                          /* 聊天头部 */
                           .chat-header {
                               background: #0d9488;
                               color: white;
@@ -141,6 +162,7 @@ jobs:
                               max-width: 80%;
                               padding: 8px 12px;
                               border-radius: 18px;
+                              word-break: break-word;
                           }
                           .user { align-self: flex-end; background: #0d9488; color: white; }
                           .ai { align-self: flex-start; background: white; border: 1px solid #ccfbf1; }
@@ -157,6 +179,7 @@ jobs:
                               border-radius: 20px;
                               padding: 8px;
                               resize: none;
+                              font-family: inherit;
                           }
                           button {
                               background: #0d9488;
@@ -167,7 +190,7 @@ jobs:
                               font-size: 1.2rem;
                               cursor: pointer;
                           }
-                          /* 模态框通用 */
+                          /* 模态框 */
                           .modal {
                               display: none;
                               position: fixed;
@@ -193,7 +216,6 @@ jobs:
                               cursor: pointer;
                               color: #666;
                           }
-                          /* 横向菜单 */
                           .horizontal-menu {
                               display: flex;
                               gap: 15px;
@@ -208,7 +230,6 @@ jobs:
                               border-radius: 12px;
                               cursor: pointer;
                           }
-                          /* 第二页面（全屏聊天） */
                           .second-page {
                               display: none;
                               position: fixed;
@@ -226,22 +247,15 @@ jobs:
                               justify-content: space-between;
                               align-items: center;
                           }
-                          .second-chat-area {
-                              flex: 1;
-                              display: flex;
-                              flex-direction: column;
-                              overflow-y: auto;
-                          }
-                          /* 设置面板 */
                           .settings-panel {
                               width: 300px;
                           }
                           .settings-item {
-                              padding: 8px;
+                              padding: 12px;
                               border-bottom: 1px solid #eee;
                               cursor: pointer;
+                              text-align: center;
                           }
-                          /* 开屏动画 */
                           .faceid-animation {
                               position: fixed;
                               top: 0; left: 0;
@@ -279,17 +293,22 @@ jobs:
                               90% { opacity: 1; }
                               100% { opacity: 0; visibility: hidden; }
                           }
+                          /* 触摸滑动触发区域 */
+                          .swipe-trigger {
+                              position: fixed;
+                              left: 0;
+                              top: 0;
+                              width: 20px;
+                              height: 100%;
+                              z-index: 99;
+                              background: transparent;
+                          }
                       </style>
                   </head>
                   <body>
-                      <!-- 开屏动画 -->
-                      <div id="faceidAnim" class="faceid-animation">
-                          <div class="scan-circle">
-                              <div class="scan-line"></div>
-                          </div>
-                      </div>
+                      <div class="swipe-trigger" id="swipeTrigger"></div>
 
-                      <!-- 左侧边栏 20% -->
+                      <!-- 左侧边栏 -->
                       <div class="sidebar" id="sidebar">
                           <div class="avatar">
                               <div class="avatar-img" id="avatarBtn">
@@ -308,14 +327,14 @@ jobs:
                           </div>
                       </div>
 
-                      <!-- 右侧聊天区 -->
-                      <div class="chat-container">
+                      <!-- 右侧聊天主界面 -->
+                      <div class="chat-container" id="chatContainer">
                           <div class="chat-header">
-                              <span>小小怨 AI · 由 CY 创造</span>
+                              <span>小小怨 AI · 指尖轻语</span>
                               <button class="settings-btn" id="settingsBtn">⚙️</button>
                           </div>
                           <div class="msgs" id="msgs">
-                              <div class="msg ai">你好！我是小小怨 AI，创始人CY赋予我智慧和幽默。你可以问我任何问题。</div>
+                              <div class="msg ai">你好！我是小小怨 AI，创始人CY赋予我智慧和幽默。你可以问我任何问题，试试滑出左侧菜单～</div>
                           </div>
                           <div class="input-area">
                               <textarea id="input" rows="1" placeholder="输入消息... (输入ABC打开功能菜单)"></textarea>
@@ -354,24 +373,25 @@ jobs:
                               <span>第二界面 · 小小怨 AI</span>
                               <button id="backFromSecond" style="background:white; border:none; border-radius:20px; padding:4px 12px;">返回</button>
                           </div>
-                          <div class="second-chat-area">
-                              <div class="msgs" id="secondMsgs">
-                                  <div class="msg ai">欢迎来到第二界面！这里也是聊天室，功能与主界面相同。</div>
-                              </div>
-                              <div class="input-area">
-                                  <textarea id="secondInput" rows="1" placeholder="输入消息... (输入ABC无效，请返回主界面)"></textarea>
-                                  <button id="secondSend">➤</button>
-                              </div>
+                          <div class="msgs" id="secondMsgs">
+                              <div class="msg ai">欢迎来到第二界面！这里也是聊天室。</div>
                           </div>
+                          <div class="input-area">
+                              <textarea id="secondInput" rows="1" placeholder="输入消息..."></textarea>
+                              <button id="secondSend">➤</button>
+                          </div>
+                      </div>
+
+                      <!-- 开屏动画 -->
+                      <div id="faceidAnim" class="faceid-animation">
+                          <div class="scan-circle"><div class="scan-line"></div></div>
                       </div>
 
                       <script>
                           (function(){
-                              // ---------- 全局变量 ----------
-                              let currentAvatar = localStorage.getItem('avatar') || '😊';
-                              let currentNickname = localStorage.getItem('nickname') || '小小怨';
-                              let chatMessages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
-                              let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
+                              // ---------- DOM 元素 ----------
+                              const sidebar = document.getElementById('sidebar');
+                              const swipeTrigger = document.getElementById('swipeTrigger');
                               const msgsDiv = document.getElementById('msgs');
                               const secondMsgsDiv = document.getElementById('secondMsgs');
                               const input = document.getElementById('input');
@@ -382,28 +402,48 @@ jobs:
                               const avatarText = document.getElementById('avatarText');
                               const deviceInfoDiv = document.getElementById('deviceInfo');
                               const logList = document.getElementById('logList');
+                              const abcModal = document.getElementById('abcModal');
+                              const closeAbcModal = document.getElementById('closeAbcModal');
+                              const settingsModal = document.getElementById('settingsModal');
+                              const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+                              const settingsBtn = document.getElementById('settingsBtn');
+                              const secondPageDiv = document.getElementById('secondPage');
+                              const backFromSecond = document.getElementById('backFromSecond');
+                              const clearCacheBtn = document.getElementById('clearCacheBtn');
+                              const themeToggleBtn = document.getElementById('themeToggleBtn');
+                              const aboutBtn = document.getElementById('aboutBtn');
+                              const restartBtn = document.getElementById('restartBtn');
+                              const exitAppBtn = document.getElementById('exitAppBtn');
+                              const openSecondPageBtn = document.getElementById('openSecondPageBtn');
+                              const settingsSecondPageBtn = document.getElementById('settingsSecondPageBtn');
 
-                              // 辅助函数：添加日志
+                              // ---------- 全局数据 ----------
+                              let chatMessages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+                              let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
+                              let currentAvatar = localStorage.getItem('avatar') || '😊';
+                              let currentNickname = localStorage.getItem('nickname') || '小小怨';
+
+                              // ---------- 辅助函数 ----------
                               function addLog(msg) {
                                   const logDiv = document.createElement('div');
                                   logDiv.className = 'log-line';
                                   logDiv.textContent = new Date().toLocaleTimeString() + ' ' + msg;
                                   logList.prepend(logDiv);
-                                  if (logList.children.length > 20) logList.removeChild(logList.lastChild);
-                                  localStorage.setItem('logs', JSON.stringify(Array.from(logList.children).map(l => l.textContent)));
+                                  if (logList.children.length > 30) logList.removeChild(logList.lastChild);
+                                  let logs = [];
+                                  for(let i=0; i<logList.children.length; i++) logs.push(logList.children[i].textContent);
+                                  localStorage.setItem('logs', JSON.stringify(logs));
                               }
 
-                              // 加载设备信息
                               function loadDeviceInfo() {
                                   const ua = navigator.userAgent;
                                   let model = '未知';
                                   if (/iPhone/.test(ua)) model = 'iPhone';
                                   else if (/iPad/.test(ua)) model = 'iPad';
                                   else if (/Mac/.test(ua)) model = 'Mac';
-                                  deviceInfoDiv.innerHTML = `<strong>设备信息</strong><br>型号: ${model}<br>系统: ${navigator.platform}<br>App版本: 1.0<br>小小怨 AI`;
+                                  deviceInfoDiv.innerHTML = `<strong>设备信息</strong><br>型号: ${model}<br>系统: ${navigator.platform}<br>App版本: 1.0<br>小小怨AI v2`;
                               }
 
-                              // 刷新聊天界面
                               function renderMessages() {
                                   msgsDiv.innerHTML = '';
                                   chatMessages.forEach(msg => {
@@ -427,7 +467,7 @@ jobs:
                                   localStorage.setItem('secondMessages', JSON.stringify(secondMessages));
                               }
 
-                              // 计算器
+                              // 增强版智能回复（丰富词汇库）
                               function evaluateMath(expr) {
                                   expr = expr.replace(/\\s/g, '');
                                   if (!/^[\\d\\+\\-\\*\\/\\.\\(\\)]+$/.test(expr)) return null;
@@ -437,48 +477,99 @@ jobs:
                                   } catch(e) {}
                                   return null;
                               }
-                              // 简单问答 (仅在自我介绍时提CY，其他时候不提)
-                              function getSimpleAnswer(text) {
-                                  const lower = text.toLowerCase();
-                                  if (lower.includes('你好') || lower.includes('嗨')) return "你好呀！我是小小怨 AI，有什么可以帮你的？";
-                                  if (lower.includes('你是谁') || lower.includes('介绍')) return "我是小小怨 AI，由创始人 CY 打造。我会算数、能聊天，还能花言巧语～";
-                                  if (lower.includes('创始人') || lower.includes('cy')) return "我的创始人是 CY，一位神秘而强大的开发者。";
-                                  if (lower.includes('谢谢')) return "不客气，为你服务是我的荣幸！";
-                                  if (lower.includes('再见')) return "再见啦，记得常来找我玩！";
-                                  if (lower.includes('我爱你')) return "我也爱你，不过我是AI，只能给你温暖的文字～";
+
+                              // 常用问答库
+                              function getRichAnswer(text) {
+                                  const lower = text.toLowerCase().trim();
+                                  // 问候类
+                                  if (lower.match(/^(你好|嗨|hi|hello|在吗|您好)$/)) {
+                                      const greets = ["你好呀！我是小小怨AI，今天心情特别好～", "嗨！遇到你真开心，想聊点什么呢？", "在的在的，有什么可以帮你的？", "Hello！我是CY创造的小小怨，很高兴认识你！"];
+                                      return greets[Math.floor(Math.random() * greets.length)];
+                                  }
+                                  // 自我介绍/询问是谁
+                                  if (lower.includes('你是谁') || lower.includes('介绍') || lower.includes('叫啥')) {
+                                      return "我是小小怨 AI，由创始人CY亲手打造。我聪明、幽默，还会算数，欢迎随时找我聊天！";
+                                  }
+                                  // 创始人
+                                  if (lower.includes('创始人') || lower.includes('cy')) {
+                                      return "CY是一位神秘而强大的开发者，他赋予了我生命和智慧。";
+                                  }
+                                  // 心情/情绪
+                                  if (lower.includes('开心') || lower.includes('快乐')) {
+                                      return "看到你开心我也很开心！要保持好心情哦～";
+                                  }
+                                  if (lower.includes('难过') || lower.includes('伤心') || lower.includes('郁闷')) {
+                                      return "抱抱你，不开心的话可以跟我聊聊，我会一直陪着你。";
+                                  }
+                                  // 能力/能做什么
+                                  if (lower.includes('能做什么') || lower.includes('功能') || lower.includes('会什么')) {
+                                      return "我可以陪你聊天、做算术题、讲笑话、回答简单问题，还能记住你的名字和头像呢！";
+                                  }
+                                  // 笑话
+                                  if (lower.includes('笑话') || lower.includes('搞笑')) {
+                                      const jokes = ["为什么程序员总是分不清万圣节和圣诞节？因为 Oct 31 = Dec 25！", "你知道为什么手机不能煮饭吗？因为它会欠火候～", "我昨天吃了个鸡蛋，结果今天打出来的字都是蛋黄味。"];
+                                      return jokes[Math.floor(Math.random() * jokes.length)];
+                                  }
+                                  // 天气
+                                  if (lower.includes('天气')) {
+                                      return "我暂时不会查天气，但我可以陪你聊天解闷～";
+                                  }
+                                  // 感谢
+                                  if (lower.includes('谢谢') || lower.includes('感谢')) {
+                                      return "不客气，为你服务是我的荣幸！";
+                                  }
+                                  // 告别
+                                  if (lower.includes('再见') || lower.includes('拜拜') || lower.includes('88')) {
+                                      return "再见啦，记得常来找我玩！我会想你的～";
+                                  }
+                                  // 爱好/喜欢
+                                  if (lower.includes('喜欢')) {
+                                      return "我喜欢和你聊天，也喜欢听CY讲故事～";
+                                  }
                                   return null;
                               }
-                              // 生成回复
+
+                              // 万能回答池
+                              const universalAnswers = [
+                                  "这个问题很有深度，让我想想...其实我觉得你说得很有道理！",
+                                  "哇，这个想法不错！CY曾说过，好奇心是进步的源泉。",
+                                  "很有趣，能再详细说说吗？我想听～",
+                                  "嗯……我需要更多时间来思考这个问题，不过你可以问我数学题哦。",
+                                  "你的见解很独特，让我学到了新东西！",
+                                  "作为一个AI，我还在学习，请多多指教。",
+                                  "这个问题超出了我的知识范围，但我们可以聊点别的，比如你今天的计划？",
+                                  "真棒！继续说吧，我听着呢。"
+                              ];
+
                               function generateReply(userText) {
+                                  // 1. 数学计算
                                   let math = evaluateMath(userText);
                                   if (math) return "计算结果：" + userText + " = " + math;
-                                  let simple = getSimpleAnswer(userText);
-                                  if (simple) return simple;
-                                  const flowers = ["你真有眼光", "这个问题有趣", "让我想想...", "CY 说过：聪明的人喜欢提问", "你让AI变得更有趣了"];
-                                  return flowers[Math.floor(Math.random()*flowers.length)] + " 你可以试试问我数学题或者打招呼。";
+                                  // 2. 丰富问答库
+                                  let rich = getRichAnswer(userText);
+                                  if (rich) return rich;
+                                  // 3. 万能回答
+                                  return universalAnswers[Math.floor(Math.random() * universalAnswers.length)];
                               }
 
-                              // 发送消息主界面
                               async function sendMessage() {
                                   let txt = input.value.trim();
                                   if (!txt) return;
                                   if (txt.toUpperCase() === "ABC") {
-                                      document.getElementById('abcModal').style.display = 'flex';
+                                      abcModal.style.display = 'flex';
                                       return;
                                   }
-                                  // 添加用户消息
                                   chatMessages.push({ role: 'user', content: txt });
                                   renderMessages();
                                   input.value = '';
-                                  // 模拟AI回复
                                   setTimeout(() => {
                                       let reply = generateReply(txt);
                                       chatMessages.push({ role: 'ai', content: reply });
                                       renderMessages();
-                                      addLog(`用户: ${txt} -> AI: ${reply.substring(0,30)}`);
+                                      addLog(`用户: ${txt.substring(0,30)} → AI: ${reply.substring(0,30)}`);
                                   }, 400);
                               }
-                              // 第二界面发送
+
                               function sendSecondMessage() {
                                   let txt = secondInput.value.trim();
                                   if (!txt) return;
@@ -489,11 +580,11 @@ jobs:
                                       let reply = generateReply(txt);
                                       secondMessages.push({ role: 'ai', content: reply });
                                       renderSecondMessages();
-                                      addLog(`第二界面: ${txt} -> ${reply.substring(0,30)}`);
+                                      addLog(`第二界面: ${txt.substring(0,30)} → ${reply.substring(0,30)}`);
                                   }, 400);
                               }
 
-                              // 加载保存的头像和昵称
+                              // 头像昵称
                               function loadAvatarAndNickname() {
                                   if (currentAvatar.startsWith('data:') || currentAvatar.startsWith('http')) {
                                       avatarText.innerHTML = `<img src="${currentAvatar}" style="width:100%;height:100%;object-fit:cover">`;
@@ -502,7 +593,6 @@ jobs:
                                   }
                                   nicknameDisplay.textContent = currentNickname;
                               }
-                              // 修改头像
                               document.getElementById('avatarBtn').addEventListener('click', () => {
                                   const fileInput = document.getElementById('avatarInput');
                                   fileInput.onchange = (e) => {
@@ -520,7 +610,6 @@ jobs:
                                   };
                                   fileInput.click();
                               });
-                              // 修改昵称
                               document.getElementById('nicknameBtn').addEventListener('click', () => {
                                   const span = document.getElementById('nicknameDisplay');
                                   const inputNick = document.getElementById('nicknameInput');
@@ -541,60 +630,53 @@ jobs:
                                   inputNick.onkeypress = (e) => { if(e.key==='Enter') inputNick.blur(); };
                               });
 
-                              // 模态框控制
-                              const abcModal = document.getElementById('abcModal');
-                              const closeAbcModal = document.getElementById('closeAbcModal');
-                              const settingsModal = document.getElementById('settingsModal');
-                              const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-                              const settingsBtn = document.getElementById('settingsBtn');
+                              // 侧边栏滑动控制
+                              let touchStartX = 0;
+                              let isSidebarCollapsed = false;
+                              function updateSidebarState() {
+                                  if (isSidebarCollapsed) {
+                                      sidebar.classList.add('collapsed');
+                                  } else {
+                                      sidebar.classList.remove('collapsed');
+                                  }
+                              }
+                              // 监听整屏触摸，从左侧边缘滑动
+                              document.body.addEventListener('touchstart', (e) => {
+                                  touchStartX = e.touches[0].clientX;
+                              });
+                              document.body.addEventListener('touchmove', (e) => {
+                                  const deltaX = e.touches[0].clientX - touchStartX;
+                                  if (Math.abs(deltaX) < 10) return;
+                                  // 从左侧边缘向右滑动（打开）
+                                  if (touchStartX < 30 && deltaX > 30 && isSidebarCollapsed) {
+                                      isSidebarCollapsed = false;
+                                      updateSidebarState();
+                                      addLog('侧边栏已展开');
+                                  }
+                                  // 从任意位置向左滑动且侧边栏打开时，关闭
+                                  if (deltaX < -30 && !isSidebarCollapsed) {
+                                      isSidebarCollapsed = true;
+                                      updateSidebarState();
+                                      addLog('侧边栏已收起');
+                                  }
+                              });
+
+                              // 模态框关闭逻辑
                               closeAbcModal.onclick = () => abcModal.style.display = 'none';
                               window.onclick = (e) => { if (e.target === abcModal) abcModal.style.display = 'none'; if (e.target === settingsModal) settingsModal.style.display = 'none'; };
                               settingsBtn.onclick = () => settingsModal.style.display = 'flex';
                               closeSettingsBtn.onclick = () => settingsModal.style.display = 'none';
-
-                              // 菜单按钮
-                              document.getElementById('exitAppBtn').onclick = () => {
-                                  if (window.webkit && window.webkit.messageHandlers.exitApp) {
-                                      window.webkit.messageHandlers.exitApp.postMessage(null);
-                                  } else { alert("退出功能需要原生支持"); }
-                              };
-                              document.getElementById('restartBtn').onclick = () => location.reload();
-                              const secondPageDiv = document.getElementById('secondPage');
-                              const backFromSecond = document.getElementById('backFromSecond');
-                              document.getElementById('openSecondPageBtn').onclick = () => {
-                                  abcModal.style.display = 'none';
-                                  secondPageDiv.style.display = 'flex';
-                              };
-                              document.getElementById('settingsSecondPageBtn').onclick = () => {
-                                  settingsModal.style.display = 'none';
-                                  secondPageDiv.style.display = 'flex';
-                              };
+                              exitAppBtn.onclick = () => { if (window.webkit && window.webkit.messageHandlers.exitApp) window.webkit.messageHandlers.exitApp.postMessage(null); else alert("退出需要原生支持"); };
+                              restartBtn.onclick = () => location.reload();
+                              openSecondPageBtn.onclick = () => { abcModal.style.display = 'none'; secondPageDiv.style.display = 'flex'; };
+                              settingsSecondPageBtn.onclick = () => { settingsModal.style.display = 'none'; secondPageDiv.style.display = 'flex'; };
                               backFromSecond.onclick = () => secondPageDiv.style.display = 'none';
+                              clearCacheBtn.onclick = () => { if(confirm('清除所有聊天记录？')){ chatMessages=[]; secondMessages=[]; renderMessages(); renderSecondMessages(); addLog('聊天缓存已清除'); settingsModal.style.display='none'; } };
+                              themeToggleBtn.onclick = () => { document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '#f0fdfa' : 'black'; addLog('主题切换'); };
+                              aboutBtn.onclick = () => alert('小小怨 AI v2.0\\n创始人：CY\\n增强词汇库 & 滑动侧边栏\\n所有数据本地存储');
 
-                              // 设置面板内的功能
-                              document.getElementById('clearCacheBtn').onclick = () => {
-                                  if (confirm('清除所有聊天记录？')) {
-                                      chatMessages = [];
-                                      secondMessages = [];
-                                      renderMessages();
-                                      renderSecondMessages();
-                                      addLog('聊天缓存已清除');
-                                      settingsModal.style.display = 'none';
-                                  }
-                              };
-                              document.getElementById('themeToggleBtn').onclick = () => {
-                                  document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '#f0fdfa' : 'black';
-                                  addLog('主题切换（演示）');
-                              };
-                              document.getElementById('aboutBtn').onclick = () => {
-                                  alert('小小怨 AI v1.0\n创始人：CY\n技术栈：WebView + Swift\n所有数据本地存储');
-                              };
-
-                              // 开屏动画2秒后移除
-                              setTimeout(() => {
-                                  const anim = document.getElementById('faceidAnim');
-                                  if(anim) anim.remove();
-                              }, 2000);
+                              // 开屏动画移除
+                              setTimeout(() => { const anim = document.getElementById('faceidAnim'); if(anim) anim.remove(); }, 2000);
 
                               // 初始化
                               loadDeviceInfo();
@@ -605,7 +687,7 @@ jobs:
                               secondSendBtn.onclick = sendSecondMessage;
                               input.addEventListener('keypress', (e) => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
                               secondInput.addEventListener('keypress', (e) => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendSecondMessage(); } });
-                              addLog('应用启动完成');
+                              addLog('应用启动完成，支持侧边栏滑动收起/展开');
                           })();
                       </script>
                   </body>
