@@ -52,30 +52,21 @@ jobs:
                           * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
                           body {
                               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                              background: #fff;
+                              background: #ffffff;
                               height: 100vh;
                               overflow: hidden;
                               position: relative;
+                              color: #000000;
                           }
-                          /* 磨砂背景 */
-                          .bg-blur {
-                              position: fixed;
-                              top: 0; left: 0;
-                              width: 100%; height: 100%;
-                              background: rgba(0,0,0,0.2);
-                              backdrop-filter: blur(20px);
-                              z-index: -1;
-                          }
-                          /* 左侧边栏 */
+                          /* 左侧边栏（白底黑字） */
                           .sidebar {
                               position: fixed;
                               left: 0;
                               top: 0;
                               width: 280px;
                               height: 100%;
-                              background: rgba(0,0,0,0.85);
-                              backdrop-filter: blur(30px);
-                              border-right: 1px solid rgba(255,255,255,0.15);
+                              background: #ffffff;
+                              border-right: 1px solid rgba(0,0,0,0.1);
                               padding: 20px 16px;
                               display: flex;
                               flex-direction: column;
@@ -84,8 +75,9 @@ jobs:
                               transform: translateX(-100%);
                               transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
                               z-index: 100;
-                              box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+                              box-shadow: 2px 0 10px rgba(0,0,0,0.05);
                               border-radius: 0 28px 28px 0;
+                              color: #000;
                           }
                           .sidebar.open { transform: translateX(0); }
                           .avatar { text-align: center; }
@@ -93,9 +85,8 @@ jobs:
                               width: 90px;
                               height: 90px;
                               border-radius: 50%;
-                              background: radial-gradient(circle at 30% 30%, #e0e0e0, #666);
-                              box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.7), inset 0 -2px 4px rgba(0,0,0,0.2);
-                              color: #111;
+                              background: #e0e0e0;
+                              box-shadow: 0 4px 8px rgba(0,0,0,0.1);
                               display: flex;
                               align-items: center;
                               justify-content: center;
@@ -114,27 +105,25 @@ jobs:
                               cursor: pointer;
                               padding: 6px;
                               border-radius: 20px;
-                              color: #fff;
                               font-size: 18px;
                           }
-                          .nickname:hover { background: rgba(255,255,255,0.2); }
+                          .nickname:hover { background: #f0f0f0; }
                           .card {
-                              background: rgba(255,255,255,0.1);
-                              backdrop-filter: blur(10px);
+                              background: #f8f8f8;
                               border-radius: 24px;
                               padding: 12px;
-                              border: 1px solid rgba(255,255,255,0.2);
+                              border: 1px solid #eee;
                           }
                           .card-title {
                               font-size: 12px;
                               text-transform: uppercase;
                               letter-spacing: 1px;
-                              color: #aaa;
+                              color: #666;
                               margin-bottom: 8px;
                           }
                           .device-info p, .log-line {
                               font-size: 12px;
-                              color: #ddd;
+                              color: #333;
                               margin: 4px 0;
                           }
                           .log-area {
@@ -142,7 +131,7 @@ jobs:
                               overflow-y: auto;
                           }
                           .log-line {
-                              border-bottom: 1px solid rgba(255,255,255,0.1);
+                              border-bottom: 1px solid #eee;
                               padding: 4px 0;
                               font-family: monospace;
                           }
@@ -152,18 +141,16 @@ jobs:
                               gap: 10px;
                           }
                           .extra-btn {
-                              background: rgba(255,255,255,0.15);
-                              border: 1px solid rgba(255,255,255,0.3);
+                              background: #f0f0f0;
+                              border: 1px solid #ddd;
                               border-radius: 30px;
                               padding: 10px;
                               font-size: 14px;
                               font-weight: 500;
-                              color: white;
                               cursor: pointer;
                               text-align: center;
-                              transition: 0.2s;
                           }
-                          .extra-btn:hover { background: rgba(255,255,255,0.3); }
+                          .extra-btn:active { background: #e0e0e0; }
                           .chat-container {
                               display: flex;
                               flex-direction: column;
@@ -171,24 +158,22 @@ jobs:
                               width: 100%;
                           }
                           .nav-bar {
-                              background: rgba(0,0,0,0.6);
-                              backdrop-filter: blur(20px);
+                              background: #ffffff;
                               padding: 12px 20px;
                               display: flex;
                               justify-content: space-between;
                               align-items: center;
-                              border-bottom: 1px solid rgba(255,255,255,0.15);
+                              border-bottom: 1px solid #eee;
                           }
                           .nav-title {
                               font-size: 18px;
                               font-weight: 600;
-                              color: white;
+                              color: #000;
                           }
                           .settings-icon {
                               font-size: 24px;
                               background: none;
                               border: none;
-                              color: white;
                               cursor: pointer;
                               width: 40px;
                               height: 40px;
@@ -197,7 +182,7 @@ jobs:
                               align-items: center;
                               justify-content: center;
                           }
-                          .settings-icon:active { background: rgba(255,255,255,0.2); }
+                          .settings-icon:active { background: #f0f0f0; }
                           .messages {
                               flex: 1;
                               overflow-y: auto;
@@ -221,47 +206,48 @@ jobs:
                           }
                           .ai {
                               align-self: flex-start;
-                              background: #fff;
+                              background: #f0f0f0;
                               color: #000;
-                              border: 0.5px solid #ccc;
+                              border: 0.5px solid #ddd;
                               border-bottom-left-radius: 6px;
                           }
                           .input-bar {
                               display: flex;
                               padding: 12px 16px;
-                              background: rgba(0,0,0,0.7);
-                              backdrop-filter: blur(20px);
+                              background: #ffffff;
                               gap: 12px;
-                              border-top: 1px solid rgba(255,255,255,0.15);
+                              border-top: 1px solid #eee;
                           }
                           .input-field {
                               flex: 1;
-                              background: rgba(255,255,255,0.95);
-                              border: none;
+                              background: #f5f5f5;
+                              border: 1px solid #ddd;
                               border-radius: 30px;
                               padding: 12px 18px;
                               font-size: 16px;
                               outline: none;
+                              color: #000;
+                          }
+                          .input-field::placeholder {
+                              color: #aaa;
                           }
                           .send-btn {
-                              background: #fff;
+                              background: #000;
                               border: none;
                               border-radius: 30px;
                               width: 48px;
                               height: 48px;
-                              color: #000;
+                              color: #fff;
                               font-size: 20px;
                               cursor: pointer;
                               display: flex;
                               align-items: center;
                               justify-content: center;
-                              transition: 0.2s;
                           }
                           .send-btn:active { transform: scale(0.94); }
                           .dock {
-                              background: rgba(0,0,0,0.75);
-                              backdrop-filter: blur(30px);
-                              border-top: 0.5px solid rgba(255,255,255,0.2);
+                              background: #ffffff;
+                              border-top: 0.5px solid #eee;
                               padding: 8px 16px 12px;
                               display: flex;
                               justify-content: space-around;
@@ -270,40 +256,35 @@ jobs:
                               margin: 0 12px;
                           }
                           .dock-item {
-                              background: rgba(255,255,255,0.15);
+                              background: #f5f5f5;
                               border: none;
                               border-radius: 32px;
                               padding: 8px 20px;
                               font-size: 14px;
                               font-weight: 500;
-                              color: white;
                               cursor: pointer;
-                              transition: 0.2s;
                               display: flex;
                               align-items: center;
                               gap: 6px;
                           }
-                          .dock-item:active { background: rgba(255,255,255,0.3); transform: scale(0.96); }
+                          .dock-item:active { background: #e0e0e0; transform: scale(0.96); }
                           .modal {
                               display: none;
                               position: fixed;
                               top: 0; left: 0;
                               width: 100%; height: 100%;
-                              background: rgba(0,0,0,0.8);
-                              backdrop-filter: blur(15px);
+                              background: rgba(0,0,0,0.5);
                               justify-content: center;
                               align-items: center;
                               z-index: 1000;
                           }
                           .modal-card {
-                              background: rgba(30,30,30,0.95);
-                              backdrop-filter: blur(20px);
+                              background: #fff;
                               border-radius: 32px;
                               padding: 24px;
                               min-width: 260px;
-                              color: white;
-                              border: 1px solid rgba(255,255,255,0.2);
                               position: relative;
+                              box-shadow: 0 10px 25px rgba(0,0,0,0.1);
                           }
                           .close-icon {
                               position: absolute;
@@ -311,7 +292,7 @@ jobs:
                               right: 20px;
                               font-size: 28px;
                               cursor: pointer;
-                              color: #aaa;
+                              color: #666;
                           }
                           .modal-buttons {
                               display: flex;
@@ -320,11 +301,10 @@ jobs:
                               margin-top: 20px;
                           }
                           .modal-btn {
-                              background: rgba(255,255,255,0.2);
+                              background: #f0f0f0;
                               border: none;
                               border-radius: 30px;
                               padding: 8px 16px;
-                              color: white;
                               cursor: pointer;
                           }
                           .second-page {
@@ -337,19 +317,18 @@ jobs:
                               z-index: 1100;
                           }
                           .second-header {
-                              background: #000;
-                              color: white;
+                              background: #fff;
+                              border-bottom: 1px solid #eee;
                               padding: 16px;
                               display: flex;
                               justify-content: space-between;
                               align-items: center;
                           }
-                          /* 面容ID扫描动画 */
                           .faceid-animation {
                               position: fixed;
                               top: 0; left: 0;
                               width: 100%; height: 100%;
-                              background: black;
+                              background: #000;
                               z-index: 2000;
                               display: flex;
                               justify-content: center;
@@ -385,16 +364,10 @@ jobs:
                       </style>
                   </head>
                   <body>
-                      <div class="bg-blur"></div>
-
-                      <!-- 开屏动画（面容ID样式） -->
                       <div id="splash" class="faceid-animation">
-                          <div class="scan-circle">
-                              <div class="scan-line"></div>
-                          </div>
+                          <div class="scan-circle"><div class="scan-line"></div></div>
                       </div>
 
-                      <!-- 左侧边栏 -->
                       <div class="sidebar" id="sidebar">
                           <div class="avatar">
                               <div class="avatar-img" id="avatarBtn"><span id="avatarText"></span><input type="file" id="avatarInput" accept="image/*" style="display:none"></div>
@@ -414,7 +387,6 @@ jobs:
                           </div>
                       </div>
 
-                      <!-- 主聊天界面 -->
                       <div class="chat-container">
                           <div class="nav-bar">
                               <span class="nav-title">小小怨AI</span>
@@ -424,7 +396,7 @@ jobs:
                               <div class="msg ai">你好！我是小小怨AI，创始人CY创造。左滑可打开侧边栏~</div>
                           </div>
                           <div class="input-bar">
-                              <input type="text" class="input-field" id="messageInput" placeholder="输入消息... (输入ABC打开菜单)">
+                              <input type="text" class="input-field" id="messageInput" placeholder="输入消息...">
                               <button class="send-btn" id="sendBtn">➤</button>
                           </div>
                           <div class="dock">
@@ -434,7 +406,6 @@ jobs:
                           </div>
                       </div>
 
-                      <!-- ABC菜单模态框 -->
                       <div id="abcModal" class="modal">
                           <div class="modal-card">
                               <span class="close-icon" id="closeAbcModal">&times;</span>
@@ -447,12 +418,11 @@ jobs:
                           </div>
                       </div>
 
-                      <!-- 设置面板 -->
                       <div id="settingsModal" class="modal">
                           <div class="modal-card">
                               <span class="close-icon" id="closeSettingsBtn">&times;</span>
-                              <h3 style="margin-bottom:20px">设置</h3>
-                              <div style="display:flex; flex-direction:column; gap:12px;">
+                              <h3>设置</h3>
+                              <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">
                                   <button class="modal-btn" id="clearCacheBtn">清除聊天缓存</button>
                                   <button class="modal-btn" id="themeToggleBtn">切换主题（亮/暗）</button>
                                   <button class="modal-btn" id="aboutBtn">关于</button>
@@ -461,11 +431,10 @@ jobs:
                           </div>
                       </div>
 
-                      <!-- 第二界面 -->
                       <div id="secondPage" class="second-page">
                           <div class="second-header">
                               <span>第二界面 · 小小怨AI</span>
-                              <button id="backFromSecond" style="background:white; border:none; border-radius:30px; padding:6px 16px;">返回</button>
+                              <button id="backFromSecond" style="background:#f0f0f0; border:none; border-radius:30px; padding:6px 16px;">返回</button>
                           </div>
                           <div class="messages" id="secondMessages" style="flex:1; overflow-y:auto; padding:16px;">
                               <div class="msg ai">欢迎来到第二界面！</div>
@@ -478,6 +447,9 @@ jobs:
 
                       <script>
                           (function(){
+                              // 开屏动画2秒后移除
+                              setTimeout(() => { const s = document.getElementById('splash'); if(s) s.remove(); }, 2000);
+
                               // DOM 元素
                               const sidebar = document.getElementById('sidebar');
                               const messagesDiv = document.getElementById('messages');
@@ -509,13 +481,8 @@ jobs:
                               const dockHome = document.getElementById('dockHome');
                               const dockAbc = document.getElementById('dockAbc');
                               const dockSecond = document.getElementById('dockSecond');
-                              // 开屏动画2秒后自动移除
-                              setTimeout(() => {
-                                  const splash = document.getElementById('splash');
-                                  if(splash) splash.remove();
-                              }, 2000);
 
-                              // 数据存储
+                              // 数据
                               let chatMessages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
                               let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
                               let currentAvatar = localStorage.getItem('avatar') || '';
@@ -534,7 +501,7 @@ jobs:
                                   if(/iPhone/.test(ua)) model = 'iPhone';
                                   else if(/iPad/.test(ua)) model = 'iPad';
                                   else if(/Mac/.test(ua)) model = 'Mac';
-                                  deviceInfoDiv.innerHTML = `<p>型号：${model}</p><p>系统：${navigator.platform}</p><p>版本：2.0</p><p>小小怨AI · 黑白磨砂</p>`;
+                                  deviceInfoDiv.innerHTML = `<p>型号：${model}</p><p>系统：${navigator.platform}</p><p>版本：2.0</p><p>小小怨AI · 白底黑字</p>`;
                               }
                               function renderMessages(){
                                   messagesDiv.innerHTML = '';
@@ -666,7 +633,7 @@ jobs:
                                   };
                                   inputNick.onkeypress = (e) => { if(e.key==='Enter') inputNick.blur(); };
                               });
-                              // 侧边栏滑动
+                              // 侧边栏滑动（右滑打开，左滑关闭）
                               let touchStartX = 0;
                               let isSidebarOpen = false;
                               function updateSidebar(){
@@ -676,17 +643,18 @@ jobs:
                               document.body.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
                               document.body.addEventListener('touchmove', (e) => {
                                   const deltaX = e.touches[0].clientX - touchStartX;
-                                  if(touchStartX < 25 && deltaX > 30 && !isSidebarOpen){
+                                  if(touchStartX < 30 && deltaX > 25 && !isSidebarOpen){
                                       isSidebarOpen = true;
                                       updateSidebar();
                                       addLog('侧边栏已展开');
                                   }
-                                  if(deltaX < -30 && isSidebarOpen){
+                                  if(deltaX < -25 && isSidebarOpen){
                                       isSidebarOpen = false;
                                       updateSidebar();
                                       addLog('侧边栏已收起');
                                   }
                               }, { passive: false });
+                              // 点击页面其他地方关闭侧边栏
                               document.addEventListener('click', (e) => {
                                   if(isSidebarOpen && !sidebar.contains(e.target) && !e.target.closest('.sidebar')){
                                       isSidebarOpen = false;
@@ -705,24 +673,26 @@ jobs:
                               backFromSecond.onclick = () => secondPage.style.display = 'none';
                               clearCacheBtn.onclick = () => { if(confirm('清除聊天记录？')){ chatMessages=[]; secondMessages=[]; renderMessages(); renderSecondMessages(); addLog('聊天缓存已清除'); settingsModal.style.display='none'; } };
                               themeToggleBtn.onclick = () => { document.body.style.backgroundColor = document.body.style.backgroundColor === '#fff' ? '#000' : '#fff'; addLog('主题切换'); };
-                              aboutBtn.onclick = () => alert('小小怨AI v2.0\\n创始人：CY\\n黑白磨砂·Dock栏·立体苹果');
+                              aboutBtn.onclick = () => alert('小小怨AI v2.0\\n创始人：CY\\n白底黑字·滑动侧边栏');
                               clearDataBtn.onclick = () => { localStorage.clear(); chatMessages=[]; secondMessages=[]; renderMessages(); renderSecondMessages(); addLog('所有数据已清除'); };
-                              aboutAppBtn.onclick = () => alert('小小怨AI — 黑白磨砂质感\\n边缘钝化苹果风格\\nDock栏快速访问');
+                              aboutAppBtn.onclick = () => alert('小小怨AI — 白底黑字，支持滑动菜单');
                               // Dock 按钮
                               dockHome.onclick = () => { if(secondPage.style.display === 'flex') secondPage.style.display = 'none'; input.focus(); };
                               dockAbc.onclick = () => abcModal.style.display = 'flex';
                               dockSecond.onclick = () => secondPage.style.display = 'flex';
-                              // 发送按钮
+                              // 发送按钮与键盘
                               sendBtn.onclick = sendMessage;
                               secondSendBtn.onclick = sendSecondMessage;
                               input.addEventListener('keypress', (e) => { if(e.key === 'Enter'){ e.preventDefault(); sendMessage(); } });
                               secondInput.addEventListener('keypress', (e) => { if(e.key === 'Enter'){ e.preventDefault(); sendSecondMessage(); } });
+                              // 确保输入框可聚焦
+                              input.addEventListener('touchstart', (e) => { e.stopPropagation(); });
                               // 初始化
                               loadDeviceInfo();
                               loadAvatarAndNickname();
                               renderMessages();
                               renderSecondMessages();
-                              addLog('应用启动 | 黑白磨砂 | Dock栏可用 | 面容ID开屏');
+                              addLog('应用启动 | 白底黑字 | 侧边栏滑动可用');
                           })();
                       </script>
                   </body>
