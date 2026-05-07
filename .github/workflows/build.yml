@@ -48,47 +48,60 @@ jobs:
                   <html>
                   <head>
                       <meta charset="UTF-8">
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
                       <title>小小怨AI</title>
                       <style>
-                          * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+                          * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
                           body {
                               font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                              background: #f0fdfa;
+                              background: #e5e5e5;
                               height: 100vh;
                               overflow: hidden;
-                              display: flex;
                               position: relative;
                           }
-                          /* 左侧边栏 */
+                          /* 主背景磨砂玻璃效果 */
+                          body::before {
+                              content: "";
+                              position: fixed;
+                              top: 0; left: 0;
+                              width: 100%; height: 100%;
+                              background: rgba(255,255,255,0.3);
+                              backdrop-filter: blur(10px);
+                              z-index: -1;
+                          }
+                          /* 左侧边栏：磨砂黑半透明 */
                           .sidebar {
-                              width: 20%;
-                              min-width: 120px;
-                              background: #e2f5f3;
-                              border-right: 1px solid #ccc;
+                              position: fixed;
+                              left: 0;
+                              top: 0;
+                              width: 260px;
+                              height: 100%;
+                              background: rgba(30,30,30,0.85);
+                              backdrop-filter: blur(15px);
+                              border-right: 1px solid rgba(255,255,255,0.2);
                               padding: 16px;
                               display: flex;
                               flex-direction: column;
                               gap: 16px;
                               overflow-y: auto;
-                              transition: width 0.2s ease, padding 0.2s ease, min-width 0.2s ease;
-                              z-index: 10;
+                              transform: translateX(-100%);
+                              transition: transform 0.25s ease;
+                              z-index: 100;
+                              box-shadow: 2px 0 20px rgba(0,0,0,0.3);
+                              color: #f0f0f0;
                           }
-                          .sidebar.collapsed {
-                              width: 0;
-                              min-width: 0;
-                              padding: 0;
-                              overflow: hidden;
+                          .sidebar.open {
+                              transform: translateX(0);
                           }
-                          /* 右侧聊天区域 */
                           .chat-container {
-                              flex: 1;
+                              width: 100%;
+                              height: 100%;
                               display: flex;
                               flex-direction: column;
-                              height: 100vh;
-                              transition: flex 0.2s ease;
+                              background: rgba(255,255,255,0.4);
+                              backdrop-filter: blur(5px);
                           }
-                          /* 头像、设备信息等 */
+                          /* 头像区域 */
                           .avatar {
                               text-align: center;
                           }
@@ -96,44 +109,73 @@ jobs:
                               width: 80px;
                               height: 80px;
                               border-radius: 50%;
-                              background: #0d9488;
-                              color: white;
+                              background: rgba(255,255,255,0.2);
+                              backdrop-filter: blur(5px);
+                              color: #fff;
                               display: flex;
                               align-items: center;
                               justify-content: center;
-                              font-size: 40px;
+                              font-size: 48px;
                               margin: 0 auto 8px;
                               cursor: pointer;
                               overflow: hidden;
+                              border: 1px solid rgba(255,255,255,0.3);
                           }
-                          .avatar-img img { width: 100%; height: 100%; object-fit: cover; }
                           .nickname {
                               font-weight: bold;
                               text-align: center;
                               cursor: pointer;
                               padding: 4px;
                               border-radius: 8px;
+                              color: #fff;
                           }
-                          .nickname:hover { background: #ccfbf1; }
-                          .device-info, .log-area {
-                              background: white;
-                              border-radius: 12px;
+                          .nickname:hover { background: rgba(255,255,255,0.2); }
+                          .device-info, .log-area, .extra-buttons {
+                              background: rgba(0,0,0,0.5);
+                              backdrop-filter: blur(10px);
+                              border-radius: 16px;
                               padding: 12px;
                               font-size: 12px;
+                              color: #eee;
+                              border: 1px solid rgba(255,255,255,0.15);
+                          }
+                          .device-info strong, .log-area strong {
+                              display: block;
+                              margin-bottom: 8px;
+                              font-size: 13px;
+                              color: #fff;
                           }
                           .log-area {
-                              max-height: 200px;
+                              max-height: 150px;
                               overflow-y: auto;
                           }
                           .log-line {
-                              border-bottom: 1px solid #eee;
+                              border-bottom: 1px solid rgba(255,255,255,0.2);
                               padding: 4px 0;
                               font-family: monospace;
                               font-size: 11px;
                           }
+                          .extra-buttons {
+                              gap: 8px;
+                              display: flex;
+                              flex-direction: column;
+                          }
+                          .extra-btn {
+                              background: rgba(255,255,255,0.2);
+                              color: white;
+                              border: 1px solid rgba(255,255,255,0.3);
+                              border-radius: 20px;
+                              padding: 8px;
+                              font-size: 12px;
+                              cursor: pointer;
+                              text-align: center;
+                              backdrop-filter: blur(5px);
+                          }
+                          .extra-btn:hover { background: rgba(255,255,255,0.4); }
                           /* 聊天头部 */
                           .chat-header {
-                              background: #0d9488;
+                              background: rgba(0,0,0,0.6);
+                              backdrop-filter: blur(20px);
                               color: white;
                               padding: 12px 16px;
                               text-align: center;
@@ -142,6 +184,7 @@ jobs:
                               display: flex;
                               justify-content: space-between;
                               align-items: center;
+                              border-bottom: 1px solid rgba(255,255,255,0.2);
                           }
                           .settings-btn {
                               background: none;
@@ -163,26 +206,38 @@ jobs:
                               padding: 8px 12px;
                               border-radius: 18px;
                               word-break: break-word;
+                              backdrop-filter: blur(5px);
                           }
-                          .user { align-self: flex-end; background: #0d9488; color: white; }
-                          .ai { align-self: flex-start; background: white; border: 1px solid #ccfbf1; }
+                          .user {
+                              align-self: flex-end;
+                              background: rgba(0,0,0,0.7);
+                              color: white;
+                          }
+                          .ai {
+                              align-self: flex-start;
+                              background: rgba(255,255,255,0.7);
+                              color: black;
+                              border: 1px solid rgba(0,0,0,0.1);
+                          }
                           .input-area {
                               display: flex;
                               padding: 8px;
-                              background: white;
+                              background: rgba(0,0,0,0.5);
+                              backdrop-filter: blur(10px);
                               gap: 8px;
-                              border-top: 1px solid #ccc;
+                              border-top: 1px solid rgba(255,255,255,0.2);
                           }
                           textarea {
                               flex: 1;
-                              border: 1px solid #ccc;
+                              border: 1px solid rgba(255,255,255,0.3);
                               border-radius: 20px;
                               padding: 8px;
                               resize: none;
                               font-family: inherit;
+                              background: rgba(255,255,255,0.8);
                           }
                           button {
-                              background: #0d9488;
+                              background: rgba(0,0,0,0.7);
                               border: none;
                               border-radius: 30px;
                               width: 44px;
@@ -190,23 +245,27 @@ jobs:
                               font-size: 1.2rem;
                               cursor: pointer;
                           }
-                          /* 模态框 */
+                          /* 模态框磨砂 */
                           .modal {
                               display: none;
                               position: fixed;
                               top: 0; left: 0;
                               width: 100%; height: 100%;
-                              background: rgba(0,0,0,0.5);
+                              background: rgba(0,0,0,0.6);
+                              backdrop-filter: blur(8px);
                               justify-content: center;
                               align-items: center;
                               z-index: 1000;
                           }
                           .modal-card {
-                              background: white;
+                              background: rgba(30,30,30,0.9);
+                              backdrop-filter: blur(20px);
                               border-radius: 20px;
                               padding: 20px;
                               position: relative;
                               min-width: 250px;
+                              color: white;
+                              border: 1px solid rgba(255,255,255,0.2);
                           }
                           .close-icon {
                               position: absolute;
@@ -214,7 +273,7 @@ jobs:
                               right: 15px;
                               font-size: 24px;
                               cursor: pointer;
-                              color: #666;
+                              color: #ccc;
                           }
                           .horizontal-menu {
                               display: flex;
@@ -224,7 +283,7 @@ jobs:
                           }
                           .menu-btn {
                               padding: 10px 16px;
-                              background: #0d9488;
+                              background: rgba(255,255,255,0.2);
                               color: white;
                               border: none;
                               border-radius: 12px;
@@ -235,12 +294,13 @@ jobs:
                               position: fixed;
                               top: 0; left: 0;
                               width: 100%; height: 100%;
-                              background: white;
+                              background: rgba(255,255,255,0.9);
+                              backdrop-filter: blur(10px);
                               flex-direction: column;
                               z-index: 1100;
                           }
                           .second-header {
-                              background: #0d9488;
+                              background: rgba(0,0,0,0.7);
                               color: white;
                               padding: 12px;
                               display: flex;
@@ -252,10 +312,11 @@ jobs:
                           }
                           .settings-item {
                               padding: 12px;
-                              border-bottom: 1px solid #eee;
+                              border-bottom: 1px solid rgba(255,255,255,0.2);
                               cursor: pointer;
                               text-align: center;
                           }
+                          /* 3D开屏动画 */
                           .faceid-animation {
                               position: fixed;
                               top: 0; left: 0;
@@ -265,76 +326,86 @@ jobs:
                               display: flex;
                               justify-content: center;
                               align-items: center;
-                              animation: fadeOut 2s forwards;
+                              perspective: 800px;
+                              animation: fadeOut 2.5s forwards;
                           }
-                          .scan-circle {
-                              width: 200px;
-                              height: 200px;
-                              border-radius: 50%;
-                              border: 4px solid #4cd964;
-                              box-shadow: 0 0 20px #4cd964;
+                          .cube {
+                              width: 150px;
+                              height: 150px;
                               position: relative;
+                              transform-style: preserve-3d;
+                              animation: rotate3d 2s ease-in-out infinite;
                           }
-                          .scan-line {
+                          .face {
                               position: absolute;
-                              top: 0;
-                              left: 0;
-                              width: 100%;
-                              height: 2px;
-                              background: #4cd964;
-                              animation: scan 1.5s ease-in-out infinite;
+                              width: 150px;
+                              height: 150px;
+                              background: rgba(255,255,255,0.2);
+                              backdrop-filter: blur(4px);
+                              border: 2px solid #4cd964;
+                              box-shadow: 0 0 30px #4cd964;
                           }
-                          @keyframes scan {
-                              0% { top: 0; }
-                              100% { top: 100%; }
+                          .front  { transform: translateZ(75px); }
+                          .back   { transform: rotateY(180deg) translateZ(75px); }
+                          .left   { transform: rotateY(-90deg) translateZ(75px); }
+                          .right  { transform: rotateY(90deg) translateZ(75px); }
+                          .top    { transform: rotateX(90deg) translateZ(75px); }
+                          .bottom { transform: rotateX(-90deg) translateZ(75px); }
+                          @keyframes rotate3d {
+                              0% { transform: rotateX(0deg) rotateY(0deg); }
+                              100% { transform: rotateX(360deg) rotateY(360deg); }
                           }
                           @keyframes fadeOut {
                               0% { opacity: 1; visibility: visible; }
-                              90% { opacity: 1; }
+                              80% { opacity: 1; }
                               100% { opacity: 0; visibility: hidden; }
-                          }
-                          /* 触摸滑动触发区域 */
-                          .swipe-trigger {
-                              position: fixed;
-                              left: 0;
-                              top: 0;
-                              width: 20px;
-                              height: 100%;
-                              z-index: 99;
-                              background: transparent;
                           }
                       </style>
                   </head>
                   <body>
-                      <div class="swipe-trigger" id="swipeTrigger"></div>
+                      <!-- 3D开屏动画 -->
+                      <div id="faceidAnim" class="faceid-animation">
+                          <div class="cube">
+                              <div class="face front"></div>
+                              <div class="face back"></div>
+                              <div class="face left"></div>
+                              <div class="face right"></div>
+                              <div class="face top"></div>
+                              <div class="face bottom"></div>
+                          </div>
+                      </div>
 
                       <!-- 左侧边栏 -->
                       <div class="sidebar" id="sidebar">
                           <div class="avatar">
                               <div class="avatar-img" id="avatarBtn">
-                                  <span id="avatarText">😊</span>
+                                  <span id="avatarText"></span>
                                   <input type="file" id="avatarInput" accept="image/*" style="display:none">
                               </div>
                               <div class="nickname" id="nicknameBtn">
-                                  <span id="nicknameDisplay">小小怨</span>
+                                  <span id="nicknameDisplay">小小怨AI</span>
                                   <input type="text" id="nicknameInput" style="display:none; width:100%; margin-top:4px;">
                               </div>
                           </div>
                           <div class="device-info" id="deviceInfo"></div>
                           <div class="log-area" id="logArea">
-                              <strong>运行日志</strong>
+                              <strong>运行日志 / 本机详情</strong>
                               <div id="logList"></div>
+                          </div>
+                          <div class="extra-buttons">
+                              <button class="extra-btn" id="clearDataBtn">清除所有数据</button>
+                              <button class="extra-btn" id="aboutAppBtn">关于本应用</button>
                           </div>
                       </div>
 
-                      <!-- 右侧聊天主界面 -->
+                      <!-- 聊天主区 -->
                       <div class="chat-container" id="chatContainer">
                           <div class="chat-header">
-                              <span>小小怨 AI · 指尖轻语</span>
+                              <span>小小怨AI · 指尖轻语</span>
                               <button class="settings-btn" id="settingsBtn">⚙️</button>
                           </div>
                           <div class="msgs" id="msgs">
-                              <div class="msg ai">你好！我是小小怨 AI，创始人CY赋予我智慧和幽默。你可以问我任何问题，试试滑出左侧菜单～</div>
+                              <div class="msg ai">你好！我是小小怨AI，创始人CY赋予我智慧和幽默。左侧有菜单，从屏幕左边缘向右滑即可打开～</div>
                           </div>
                           <div class="input-area">
                               <textarea id="input" rows="1" placeholder="输入消息... (输入ABC打开功能菜单)"></textarea>
@@ -342,7 +413,7 @@ jobs:
                           </div>
                       </div>
 
-                      <!-- ABC 菜单弹窗（横向） -->
+                      <!-- ABC菜单 -->
                       <div id="abcModal" class="modal">
                           <div class="modal-card">
                               <span class="close-icon" id="closeAbcModal">&times;</span>
@@ -367,14 +438,14 @@ jobs:
                           </div>
                       </div>
 
-                      <!-- 第二页面（独立聊天） -->
+                      <!-- 第二界面 -->
                       <div id="secondPage" class="second-page">
                           <div class="second-header">
-                              <span>第二界面 · 小小怨 AI</span>
+                              <span>第二界面 · 小小怨AI</span>
                               <button id="backFromSecond" style="background:white; border:none; border-radius:20px; padding:4px 12px;">返回</button>
                           </div>
                           <div class="msgs" id="secondMsgs">
-                              <div class="msg ai">欢迎来到第二界面！这里也是聊天室。</div>
+                              <div class="msg ai">欢迎来到第二界面！功能相同，返回主界面也方便。</div>
                           </div>
                           <div class="input-area">
                               <textarea id="secondInput" rows="1" placeholder="输入消息..."></textarea>
@@ -382,16 +453,10 @@ jobs:
                           </div>
                       </div>
 
-                      <!-- 开屏动画 -->
-                      <div id="faceidAnim" class="faceid-animation">
-                          <div class="scan-circle"><div class="scan-line"></div></div>
-                      </div>
-
                       <script>
                           (function(){
-                              // ---------- DOM 元素 ----------
+                              // DOM 元素
                               const sidebar = document.getElementById('sidebar');
-                              const swipeTrigger = document.getElementById('swipeTrigger');
                               const msgsDiv = document.getElementById('msgs');
                               const secondMsgsDiv = document.getElementById('secondMsgs');
                               const input = document.getElementById('input');
@@ -416,14 +481,16 @@ jobs:
                               const exitAppBtn = document.getElementById('exitAppBtn');
                               const openSecondPageBtn = document.getElementById('openSecondPageBtn');
                               const settingsSecondPageBtn = document.getElementById('settingsSecondPageBtn');
+                              const clearDataBtn = document.getElementById('clearDataBtn');
+                              const aboutAppBtn = document.getElementById('aboutAppBtn');
 
-                              // ---------- 全局数据 ----------
+                              // 数据
                               let chatMessages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
                               let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
-                              let currentAvatar = localStorage.getItem('avatar') || '😊';
-                              let currentNickname = localStorage.getItem('nickname') || '小小怨';
+                              let currentAvatar = localStorage.getItem('avatar') || '';
+                              let currentNickname = localStorage.getItem('nickname') || '小小怨AI';
 
-                              // ---------- 辅助函数 ----------
+                              // 辅助函数
                               function addLog(msg) {
                                   const logDiv = document.createElement('div');
                                   logDiv.className = 'log-line';
@@ -441,7 +508,7 @@ jobs:
                                   if (/iPhone/.test(ua)) model = 'iPhone';
                                   else if (/iPad/.test(ua)) model = 'iPad';
                                   else if (/Mac/.test(ua)) model = 'Mac';
-                                  deviceInfoDiv.innerHTML = `<strong>设备信息</strong><br>型号: ${model}<br>系统: ${navigator.platform}<br>App版本: 1.0<br>小小怨AI v2`;
+                                  deviceInfoDiv.innerHTML = `<strong>本机详情</strong><br>型号: ${model}<br>系统: ${navigator.platform}<br>App版本: 2.0<br>小小怨AI · 黑白磨砂版`;
                               }
 
                               function renderMessages() {
@@ -467,7 +534,6 @@ jobs:
                                   localStorage.setItem('secondMessages', JSON.stringify(secondMessages));
                               }
 
-                              // 增强版智能回复（丰富词汇库）
                               function evaluateMath(expr) {
                                   expr = expr.replace(/\\s/g, '');
                                   if (!/^[\\d\\+\\-\\*\\/\\.\\(\\)]+$/.test(expr)) return null;
@@ -478,58 +544,46 @@ jobs:
                                   return null;
                               }
 
-                              // 常用问答库
                               function getRichAnswer(text) {
                                   const lower = text.toLowerCase().trim();
-                                  // 问候类
                                   if (lower.match(/^(你好|嗨|hi|hello|在吗|您好)$/)) {
                                       const greets = ["你好呀！我是小小怨AI，今天心情特别好～", "嗨！遇到你真开心，想聊点什么呢？", "在的在的，有什么可以帮你的？", "Hello！我是CY创造的小小怨，很高兴认识你！"];
                                       return greets[Math.floor(Math.random() * greets.length)];
                                   }
-                                  // 自我介绍/询问是谁
                                   if (lower.includes('你是谁') || lower.includes('介绍') || lower.includes('叫啥')) {
                                       return "我是小小怨 AI，由创始人CY亲手打造。我聪明、幽默，还会算数，欢迎随时找我聊天！";
                                   }
-                                  // 创始人
                                   if (lower.includes('创始人') || lower.includes('cy')) {
                                       return "CY是一位神秘而强大的开发者，他赋予了我生命和智慧。";
                                   }
-                                  // 心情/情绪
                                   if (lower.includes('开心') || lower.includes('快乐')) {
                                       return "看到你开心我也很开心！要保持好心情哦～";
                                   }
                                   if (lower.includes('难过') || lower.includes('伤心') || lower.includes('郁闷')) {
                                       return "抱抱你，不开心的话可以跟我聊聊，我会一直陪着你。";
                                   }
-                                  // 能力/能做什么
                                   if (lower.includes('能做什么') || lower.includes('功能') || lower.includes('会什么')) {
                                       return "我可以陪你聊天、做算术题、讲笑话、回答简单问题，还能记住你的名字和头像呢！";
                                   }
-                                  // 笑话
                                   if (lower.includes('笑话') || lower.includes('搞笑')) {
                                       const jokes = ["为什么程序员总是分不清万圣节和圣诞节？因为 Oct 31 = Dec 25！", "你知道为什么手机不能煮饭吗？因为它会欠火候～", "我昨天吃了个鸡蛋，结果今天打出来的字都是蛋黄味。"];
                                       return jokes[Math.floor(Math.random() * jokes.length)];
                                   }
-                                  // 天气
                                   if (lower.includes('天气')) {
                                       return "我暂时不会查天气，但我可以陪你聊天解闷～";
                                   }
-                                  // 感谢
                                   if (lower.includes('谢谢') || lower.includes('感谢')) {
                                       return "不客气，为你服务是我的荣幸！";
                                   }
-                                  // 告别
                                   if (lower.includes('再见') || lower.includes('拜拜') || lower.includes('88')) {
                                       return "再见啦，记得常来找我玩！我会想你的～";
                                   }
-                                  // 爱好/喜欢
                                   if (lower.includes('喜欢')) {
                                       return "我喜欢和你聊天，也喜欢听CY讲故事～";
                                   }
                                   return null;
                               }
 
-                              // 万能回答池
                               const universalAnswers = [
                                   "这个问题很有深度，让我想想...其实我觉得你说得很有道理！",
                                   "哇，这个想法不错！CY曾说过，好奇心是进步的源泉。",
@@ -542,13 +596,10 @@ jobs:
                               ];
 
                               function generateReply(userText) {
-                                  // 1. 数学计算
                                   let math = evaluateMath(userText);
                                   if (math) return "计算结果：" + userText + " = " + math;
-                                  // 2. 丰富问答库
                                   let rich = getRichAnswer(userText);
                                   if (rich) return rich;
-                                  // 3. 万能回答
                                   return universalAnswers[Math.floor(Math.random() * universalAnswers.length)];
                               }
 
@@ -584,7 +635,6 @@ jobs:
                                   }, 400);
                               }
 
-                              // 头像昵称
                               function loadAvatarAndNickname() {
                                   if (currentAvatar.startsWith('data:') || currentAvatar.startsWith('http')) {
                                       avatarText.innerHTML = `<img src="${currentAvatar}" style="width:100%;height:100%;object-fit:cover">`;
@@ -630,38 +680,35 @@ jobs:
                                   inputNick.onkeypress = (e) => { if(e.key==='Enter') inputNick.blur(); };
                               });
 
-                              // 侧边栏滑动控制
+                              // 侧边栏滑动
                               let touchStartX = 0;
-                              let isSidebarCollapsed = false;
-                              function updateSidebarState() {
-                                  if (isSidebarCollapsed) {
-                                      sidebar.classList.add('collapsed');
-                                  } else {
-                                      sidebar.classList.remove('collapsed');
-                                  }
+                              let isSidebarOpen = false;
+                              function updateSidebar() {
+                                  if (isSidebarOpen) sidebar.classList.add('open');
+                                  else sidebar.classList.remove('open');
                               }
-                              // 监听整屏触摸，从左侧边缘滑动
-                              document.body.addEventListener('touchstart', (e) => {
-                                  touchStartX = e.touches[0].clientX;
-                              });
+                              document.body.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
                               document.body.addEventListener('touchmove', (e) => {
                                   const deltaX = e.touches[0].clientX - touchStartX;
-                                  if (Math.abs(deltaX) < 10) return;
-                                  // 从左侧边缘向右滑动（打开）
-                                  if (touchStartX < 30 && deltaX > 30 && isSidebarCollapsed) {
-                                      isSidebarCollapsed = false;
-                                      updateSidebarState();
+                                  if (touchStartX < 20 && deltaX > 30 && !isSidebarOpen) {
+                                      isSidebarOpen = true;
+                                      updateSidebar();
                                       addLog('侧边栏已展开');
                                   }
-                                  // 从任意位置向左滑动且侧边栏打开时，关闭
-                                  if (deltaX < -30 && !isSidebarCollapsed) {
-                                      isSidebarCollapsed = true;
-                                      updateSidebarState();
+                                  if (deltaX < -30 && isSidebarOpen) {
+                                      isSidebarOpen = false;
+                                      updateSidebar();
                                       addLog('侧边栏已收起');
+                                  }
+                              }, { passive: false });
+                              document.addEventListener('click', (e) => {
+                                  if (isSidebarOpen && !sidebar.contains(e.target) && !e.target.closest('.sidebar')) {
+                                      isSidebarOpen = false;
+                                      updateSidebar();
                                   }
                               });
 
-                              // 模态框关闭逻辑
+                              // 模态框控制
                               closeAbcModal.onclick = () => abcModal.style.display = 'none';
                               window.onclick = (e) => { if (e.target === abcModal) abcModal.style.display = 'none'; if (e.target === settingsModal) settingsModal.style.display = 'none'; };
                               settingsBtn.onclick = () => settingsModal.style.display = 'flex';
@@ -672,11 +719,14 @@ jobs:
                               settingsSecondPageBtn.onclick = () => { settingsModal.style.display = 'none'; secondPageDiv.style.display = 'flex'; };
                               backFromSecond.onclick = () => secondPageDiv.style.display = 'none';
                               clearCacheBtn.onclick = () => { if(confirm('清除所有聊天记录？')){ chatMessages=[]; secondMessages=[]; renderMessages(); renderSecondMessages(); addLog('聊天缓存已清除'); settingsModal.style.display='none'; } };
-                              themeToggleBtn.onclick = () => { document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '#f0fdfa' : 'black'; addLog('主题切换'); };
-                              aboutBtn.onclick = () => alert('小小怨 AI v2.0\\n创始人：CY\\n增强词汇库 & 滑动侧边栏\\n所有数据本地存储');
+                              themeToggleBtn.onclick = () => { document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '#e5e5e5' : 'black'; addLog('主题切换'); };
+                              aboutBtn.onclick = () => alert('小小怨 AI v2.0\\n创始人：CY\\n黑白磨砂版 | 3D开屏 | 滑动侧边栏');
+                              clearDataBtn.onclick = () => { localStorage.clear(); chatMessages=[]; secondMessages=[]; renderMessages(); renderSecondMessages(); addLog('所有数据已清除'); };
+                              aboutAppBtn.onclick = () => alert('小小怨AI 2.0\\n设计：黑白磨砂质感\\n开屏动画：3D立方体\\n全部功能正常');
 
-                              // 开屏动画移除
-                              setTimeout(() => { const anim = document.getElementById('faceidAnim'); if(anim) anim.remove(); }, 2000);
+                              // 键盘事件
+                              input.addEventListener('keypress', (e) => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
+                              secondInput.addEventListener('keypress', (e) => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendSecondMessage(); } });
 
                               // 初始化
                               loadDeviceInfo();
@@ -685,9 +735,8 @@ jobs:
                               renderSecondMessages();
                               sendBtn.onclick = sendMessage;
                               secondSendBtn.onclick = sendSecondMessage;
-                              input.addEventListener('keypress', (e) => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
-                              secondInput.addEventListener('keypress', (e) => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendSecondMessage(); } });
-                              addLog('应用启动完成，支持侧边栏滑动收起/展开');
+                              setTimeout(() => { const anim = document.getElementById('faceidAnim'); if(anim) anim.remove(); }, 2500);
+                              addLog('应用启动 | 黑白磨砂主题 | 3D开屏');
                           })();
                       </script>
                   </body>
