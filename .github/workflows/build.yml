@@ -450,7 +450,7 @@ jobs:
 
                       <script>
                           (function(){
-                              // 开屏动画2秒后消失
+                              // 开屏动画2秒后移除
                               setTimeout(() => { const s = document.getElementById('splash'); if(s) s.remove(); }, 2000);
 
                               // DOM 元素
@@ -485,7 +485,7 @@ jobs:
                               const dockAbc = document.getElementById('dockAbc');
                               const dockSecond = document.getElementById('dockSecond');
 
-                              // 本地存储的聊天记录
+                              // 数据存储
                               let chatMessages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
                               let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
                               let currentAvatar = localStorage.getItem('avatar') || '';
@@ -504,7 +504,7 @@ jobs:
                                   if(/iPhone/.test(ua)) model = 'iPhone';
                                   else if(/iPad/.test(ua)) model = 'iPad';
                                   else if(/Mac/.test(ua)) model = 'Mac';
-                                  deviceInfoDiv.innerHTML = `<p>型号：${model}</p><p>系统：${navigator.platform}</p><p>版本：2.0</p><p>小小怨AI · 白底黑字</p>`;
+                                  deviceInfoDiv.innerHTML = `<p>型号：${model}</p><p>系统：${navigator.platform}</p><p>版本：2.0</p><p>小小怨AI · 完整版</p>`;
                               }
                               function renderMessages(){
                                   messagesDiv.innerHTML = '';
@@ -554,16 +554,11 @@ jobs:
                                   if(lower.includes('天气')) return "我暂时不会查天气，但可以陪你聊天～";
                                   if(lower.includes('谢谢')) return "不客气，为你服务是我的荣幸！";
                                   if(lower.includes('再见')) return "再见啦，记得常来找我玩！";
-                                  if(lower.includes('喜欢')) return "我也喜欢你呀！❤️";
-                                  if(lower.includes('聪明')) return "谢谢夸奖，你也很聪明呢～";
-                                  if(lower.includes('无聊')) return "那我给你讲个笑话吧：为什么数学书总是很忧郁？因为它有太多问题。";
                                   return null;
                               }
                               const universal = [
-                                  "这个问题很有趣，让我想想...", "CY说过：好奇心是进步的源泉", "能详细说说吗？我想听～",
-                                  "我需要更多时间思考，不过你可以问我数学题。", "你的见解很独特，让我学到了新东西！",
-                                  "作为一个AI，我还在学习，请多多指教。", "我们可以聊点别的，比如你今天的计划？",
-                                  "真棒！继续说吧，我听着呢。", "你让我变得更聪明了！", "这个问题太深奥了，不过我会努力的。"
+                                  "这个问题很有趣，让我想想...", "CY说过：好奇心是进步的源泉", "能详细说说吗？",
+                                  "我需要更多时间思考，你可以问我数学题。", "你的见解很独特！", "继续说吧，我听着呢。"
                               ];
                               function generateReply(userText){
                                   let math = evaluateMath(userText);
@@ -646,26 +641,22 @@ jobs:
                                   };
                                   inputNick.onkeypress = (e) => { if(e.key==='Enter') inputNick.blur(); };
                               });
-                              // 侧边栏滑动逻辑
+                              // 侧边栏滑动（右滑打开，左滑关闭，点击外部关闭）
                               let touchStartX = 0;
                               let isSidebarOpen = false;
                               function updateSidebar(){
                                   if(isSidebarOpen) sidebar.classList.add('open');
                                   else sidebar.classList.remove('open');
                               }
-                              document.body.addEventListener('touchstart', (e) => {
-                                  touchStartX = e.touches[0].clientX;
-                              });
+                              document.body.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
                               document.body.addEventListener('touchmove', (e) => {
                                   const deltaX = e.touches[0].clientX - touchStartX;
-                                  // 从屏幕左边缘向右滑动（打开）
                                   if(touchStartX < 30 && deltaX > 25 && !isSidebarOpen){
                                       isSidebarOpen = true;
                                       updateSidebar();
                                       addLog('侧边栏已展开');
                                       e.preventDefault();
                                   }
-                                  // 向左滑动（关闭）
                                   if(deltaX < -25 && isSidebarOpen){
                                       isSidebarOpen = false;
                                       updateSidebar();
@@ -673,7 +664,6 @@ jobs:
                                       e.preventDefault();
                                   }
                               }, { passive: false });
-                              // 点击页面其他地方关闭侧边栏
                               document.addEventListener('click', (e) => {
                                   if(isSidebarOpen && !sidebar.contains(e.target) && !e.target.closest('.sidebar')){
                                       isSidebarOpen = false;
@@ -696,9 +686,9 @@ jobs:
                                   document.body.style.backgroundColor = bg === '#fff' ? '#000' : '#fff';
                                   addLog('主题切换');
                               };
-                              aboutBtn.onclick = () => alert('小小怨AI v2.0\\n创始人：CY\\n白底黑字·滑动侧边栏');
+                              aboutBtn.onclick = () => alert('小小怨AI v2.0｜创始人CY｜完整功能');
                               clearDataBtn.onclick = () => { localStorage.clear(); chatMessages=[]; secondMessages=[]; renderMessages(); renderSecondMessages(); addLog('所有数据已清除'); };
-                              aboutAppBtn.onclick = () => alert('小小怨AI — 白底黑字，支持滑动菜单，完整聊天功能');
+                              aboutAppBtn.onclick = () => alert('小小怨AI — 白底黑字，滑动菜单，所有功能正常');
                               // Dock 按钮
                               dockHome.onclick = () => { if(secondPage.style.display === 'flex') secondPage.style.display = 'none'; input.focus(); };
                               dockAbc.onclick = () => abcModal.style.display = 'flex';
@@ -711,12 +701,12 @@ jobs:
                               // 确保输入框可交互
                               input.addEventListener('touchstart', (e) => { e.stopPropagation(); });
                               secondInput.addEventListener('touchstart', (e) => { e.stopPropagation(); });
-                              // 初始化所有
+                              // 初始化
                               loadDeviceInfo();
                               loadAvatarAndNickname();
                               renderMessages();
                               renderSecondMessages();
-                              addLog('应用启动 | 白底黑字 | 滑动侧边栏 | 完整聊天功能');
+                              addLog('应用启动 | 完整功能版 | 滑动侧边栏 | 聊天可用');
                           })();
                       </script>
                   </body>
