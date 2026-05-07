@@ -52,7 +52,7 @@ jobs:
                           * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
                           body {
                               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                              background: #000;
+                              background: #fff;
                               height: 100vh;
                               overflow: hidden;
                               position: relative;
@@ -88,10 +88,7 @@ jobs:
                               border-radius: 0 28px 28px 0;
                           }
                           .sidebar.open { transform: translateX(0); }
-                          /* 头像区域 */
-                          .avatar {
-                              text-align: center;
-                          }
+                          .avatar { text-align: center; }
                           .avatar-img {
                               width: 90px;
                               height: 90px;
@@ -121,7 +118,6 @@ jobs:
                               font-size: 18px;
                           }
                           .nickname:hover { background: rgba(255,255,255,0.2); }
-                          /* 设备信息&日志卡片 */
                           .card {
                               background: rgba(255,255,255,0.1);
                               backdrop-filter: blur(10px);
@@ -168,14 +164,12 @@ jobs:
                               transition: 0.2s;
                           }
                           .extra-btn:hover { background: rgba(255,255,255,0.3); }
-                          /* 主聊天区域 */
                           .chat-container {
                               display: flex;
                               flex-direction: column;
                               height: 100vh;
                               width: 100%;
                           }
-                          /* 顶部导航栏 */
                           .nav-bar {
                               background: rgba(0,0,0,0.6);
                               backdrop-filter: blur(20px);
@@ -204,7 +198,6 @@ jobs:
                               justify-content: center;
                           }
                           .settings-icon:active { background: rgba(255,255,255,0.2); }
-                          /* 消息列表 */
                           .messages {
                               flex: 1;
                               overflow-y: auto;
@@ -233,7 +226,6 @@ jobs:
                               border: 0.5px solid #ccc;
                               border-bottom-left-radius: 6px;
                           }
-                          /* 输入栏 */
                           .input-bar {
                               display: flex;
                               padding: 12px 16px;
@@ -266,7 +258,6 @@ jobs:
                               transition: 0.2s;
                           }
                           .send-btn:active { transform: scale(0.94); }
-                          /* Dock栏 */
                           .dock {
                               background: rgba(0,0,0,0.75);
                               backdrop-filter: blur(30px);
@@ -293,7 +284,6 @@ jobs:
                               gap: 6px;
                           }
                           .dock-item:active { background: rgba(255,255,255,0.3); transform: scale(0.96); }
-                          /* 模态框 */
                           .modal {
                               display: none;
                               position: fixed;
@@ -337,7 +327,6 @@ jobs:
                               color: white;
                               cursor: pointer;
                           }
-                          /* 第二界面 */
                           .second-page {
                               display: none;
                               position: fixed;
@@ -355,74 +344,53 @@ jobs:
                               justify-content: space-between;
                               align-items: center;
                           }
-                          /* 开屏动画容器 */
-                          .splash {
+                          /* 面容ID扫描动画 */
+                          .faceid-animation {
                               position: fixed;
                               top: 0; left: 0;
                               width: 100%; height: 100%;
-                              background: #000;
+                              background: black;
                               z-index: 2000;
                               display: flex;
                               justify-content: center;
                               align-items: center;
-                              perspective: 800px;
-                              opacity: 1;
-                              transition: opacity 0.5s;
+                              animation: fadeOut 2s forwards;
                           }
-                          .cube {
-                              width: 120px;
-                              height: 120px;
+                          .scan-circle {
+                              width: 200px;
+                              height: 200px;
+                              border-radius: 50%;
+                              border: 4px solid #4cd964;
+                              box-shadow: 0 0 20px #4cd964;
                               position: relative;
-                              transform-style: preserve-3d;
-                              animation: spin 1.5s ease-in-out forwards;
                           }
-                          .face {
+                          .scan-line {
                               position: absolute;
-                              width: 120px;
-                              height: 120px;
-                              background: rgba(255,255,255,0.2);
-                              backdrop-filter: blur(4px);
-                              border: 2px solid #4cd964;
+                              top: 0;
+                              left: 0;
+                              width: 100%;
+                              height: 2px;
+                              background: #4cd964;
+                              animation: scan 1.5s ease-in-out infinite;
                           }
-                          .front  { transform: translateZ(60px); }
-                          .back   { transform: rotateY(180deg) translateZ(60px); }
-                          .left   { transform: rotateY(-90deg) translateZ(60px); }
-                          .right  { transform: rotateY(90deg) translateZ(60px); }
-                          .top    { transform: rotateX(90deg) translateZ(60px); }
-                          .bottom { transform: rotateX(-90deg) translateZ(60px); }
-                          @keyframes spin {
-                              0% { transform: rotateX(0deg) rotateY(0deg); }
-                              100% { transform: rotateX(360deg) rotateY(360deg); }
+                          @keyframes scan {
+                              0% { top: 0; }
+                              100% { top: 100%; }
                           }
-                          .cy-letters {
-                              position: absolute;
-                              font-size: 80px;
-                              font-weight: 800;
-                              color: white;
-                              text-shadow: 0 0 20px #4cd964;
-                              opacity: 0;
-                              transform: scale(2);
-                              animation: appearShrink 1s forwards;
-                          }
-                          @keyframes appearShrink {
-                              0% { opacity: 0; transform: scale(3); }
-                              40% { opacity: 1; transform: scale(1.2); }
-                              100% { opacity: 0; transform: scale(0); visibility: hidden; }
+                          @keyframes fadeOut {
+                              0% { opacity: 1; visibility: visible; }
+                              90% { opacity: 1; }
+                              100% { opacity: 0; visibility: hidden; }
                           }
                       </style>
                   </head>
                   <body>
                       <div class="bg-blur"></div>
-                      <!-- 开屏动画 -->
-                      <div id="splash" class="splash">
-                          <div id="cubeContainer" style="position:relative; display:flex; justify-content:center; align-items:center;">
-                              <div class="cube" id="cube">
-                                  <div class="face front"></div><div class="face back"></div><div class="face left"></div><div class="face right"></div><div class="face top"></div><div class="face bottom"></div>
-                              </div>
-                              <div id="cyLetters" style="position:absolute; display:flex; gap:30px; opacity:0; pointer-events:none;">
-                                  <span class="cy-letters" id="letterC">C</span>
-                                  <span class="cy-letters" id="letterY">Y</span>
-                              </div>
+
+                      <!-- 开屏动画（面容ID样式） -->
+                      <div id="splash" class="faceid-animation">
+                          <div class="scan-circle">
+                              <div class="scan-line"></div>
                           </div>
                       </div>
 
@@ -459,7 +427,6 @@ jobs:
                               <input type="text" class="input-field" id="messageInput" placeholder="输入消息... (输入ABC打开菜单)">
                               <button class="send-btn" id="sendBtn">➤</button>
                           </div>
-                          <!-- Dock栏 -->
                           <div class="dock">
                               <button class="dock-item" id="dockHome">💬 聊天</button>
                               <button class="dock-item" id="dockAbc">🔓 ABC</button>
@@ -542,14 +509,18 @@ jobs:
                               const dockHome = document.getElementById('dockHome');
                               const dockAbc = document.getElementById('dockAbc');
                               const dockSecond = document.getElementById('dockSecond');
+                              // 开屏动画2秒后自动移除
+                              setTimeout(() => {
+                                  const splash = document.getElementById('splash');
+                                  if(splash) splash.remove();
+                              }, 2000);
 
-                              // 数据
+                              // 数据存储
                               let chatMessages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
                               let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
                               let currentAvatar = localStorage.getItem('avatar') || '';
                               let currentNickname = localStorage.getItem('nickname') || '小小怨AI';
 
-                              // 辅助函数
                               function addLog(msg){
                                   const logDiv = document.createElement('div');
                                   logDiv.className = 'log-line';
@@ -651,7 +622,6 @@ jobs:
                                       addLog(`第二界面: ${txt.substring(0,30)} → ${reply.substring(0,30)}`);
                                   }, 400);
                               }
-                              // 头像昵称
                               function loadAvatarAndNickname(){
                                   if(currentAvatar.startsWith('data:') || currentAvatar.startsWith('http')){
                                       avatarText.innerHTML = `<img src="${currentAvatar}" style="width:100%;height:100%;object-fit:cover">`;
@@ -742,33 +712,17 @@ jobs:
                               dockHome.onclick = () => { if(secondPage.style.display === 'flex') secondPage.style.display = 'none'; input.focus(); };
                               dockAbc.onclick = () => abcModal.style.display = 'flex';
                               dockSecond.onclick = () => secondPage.style.display = 'flex';
-                              // 发送事件绑定
+                              // 发送按钮
                               sendBtn.onclick = sendMessage;
                               secondSendBtn.onclick = sendSecondMessage;
                               input.addEventListener('keypress', (e) => { if(e.key === 'Enter'){ e.preventDefault(); sendMessage(); } });
                               secondInput.addEventListener('keypress', (e) => { if(e.key === 'Enter'){ e.preventDefault(); sendSecondMessage(); } });
-                              // 开屏动画：立方体转2秒 → 显示C Y → 缩小消失 → 移除splash
-                              setTimeout(() => {
-                                  const cube = document.getElementById('cube');
-                                  cube.style.animation = 'none';
-                                  const cyDiv = document.getElementById('cyLetters');
-                                  cyDiv.style.opacity = '1';
-                                  const letterC = document.getElementById('letterC');
-                                  const letterY = document.getElementById('letterY');
-                                  letterC.style.animation = 'appearShrink 1s forwards';
-                                  letterY.style.animation = 'appearShrink 1s forwards';
-                                  setTimeout(() => {
-                                      const splash = document.getElementById('splash');
-                                      splash.style.opacity = '0';
-                                      setTimeout(() => splash.remove(), 500);
-                                  }, 1000);
-                              }, 2000);
                               // 初始化
                               loadDeviceInfo();
                               loadAvatarAndNickname();
                               renderMessages();
                               renderSecondMessages();
-                              addLog('应用启动 | 黑白磨砂 | Dock栏可用');
+                              addLog('应用启动 | 黑白磨砂 | Dock栏可用 | 面容ID开屏');
                           })();
                       </script>
                   </body>
