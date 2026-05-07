@@ -1,608 +1,565 @@
-name: Build IPA
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>小小怨AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f0fdfa;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+        /* 启动动画（扫脸样式） */
+        .splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeOut 2s forwards;
+        }
+        .scan-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 4px solid #4cd964;
+            box-shadow: 0 0 20px #4cd964;
+            position: relative;
+        }
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #4cd964;
+            animation: scan 1.5s ease-in-out infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; visibility: visible; }
+            90% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
 
-jobs:
-  build:
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
+        /* 侧边栏样式 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: #0f766e;
+            backdrop-filter: blur(0);
+            z-index: 100;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.1);
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            color: white;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 10px;
+            border-radius: 24px;
+            color: white;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+        }
+        .sidebar button:active {
+            background: rgba(255,255,255,0.3);
+        }
 
-      - name: Create iOS App
-        run: |
-          mkdir -p XiaoxiaoYuanAI
-          cd XiaoxiaoYuanAI
+        /* 主容器 */
+        .main-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #f0fdfa;
+        }
+        /* 顶栏 */
+        .header {
+            padding: 12px 16px;
+            background: white;
+            border-bottom: 1px solid #ccfbf1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f766e;
+        }
+        .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* 聊天区域 */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .user {
+            align-self: flex-end;
+            background: #0d9488;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .ai {
+            align-self: flex-start;
+            background: white;
+            border: 1px solid #ccfbf1;
+            color: #1e293b;
+            border-bottom-left-radius: 4px;
+        }
+        /* 输入区 */
+        .input-area {
+            display: flex;
+            padding: 12px 16px;
+            background: white;
+            border-top: 1px solid #ccfbf1;
+            gap: 10px;
+        }
+        .input-field {
+            flex: 1;
+            border: 1px solid #99f6e4;
+            border-radius: 24px;
+            padding: 10px 16px;
+            font-size: 16px;
+            outline: none;
+            background: #fafdfc;
+        }
+        .send-btn {
+            background: #0d9488;
+            border: none;
+            border-radius: 30px;
+            width: 48px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        /* 第二界面（全屏，默认隐藏） */
+        .second-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 150;
+            display: none;
+            flex-direction: column;
+        }
+        .second-header {
+            padding: 12px 16px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            background: #0d9488;
+            border: none;
+            border-radius: 24px;
+            padding: 6px 12px;
+            color: white;
+            cursor: pointer;
+        }
+        /* 设置弹窗 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        .modal-card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            width: 260px;
+            text-align: center;
+        }
+        .modal-card button {
+            margin-top: 12px;
+            padding: 8px;
+            width: 100%;
+            border: none;
+            border-radius: 20px;
+            background: #e2e8f0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- 启动动画 -->
+    <div id="splash" class="splash">
+        <div class="scan-circle">
+            <div class="scan-line"></div>
+        </div>
+    </div>
 
-          cat > AppDelegate.swift << 'EOF'
-          import UIKit
-          import WebKit
+    <!-- 侧边栏 -->
+    <div id="sidebar" class="sidebar">
+        <h3>小小怨AI</h3>
+        <button id="newChatBtn">✨ 新建对话</button>
+        <button id="clearChatBtn">🗑️ 清空当前对话</button>
+        <button id="exportChatBtn">📥 导出对话</button>
+        <button id="closeSidebarBtn">关闭菜单</button>
+    </div>
 
-          class AppDelegate: UIResponder, UIApplicationDelegate {
-              var window: UIWindow?
-              func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-                  window = UIWindow(frame: UIScreen.main.bounds)
-                  let vc = ChatViewController()
-                  window?.rootViewController = vc
-                  window?.makeKeyAndVisible()
-                  return true
-              }
-              @objc func exitApp() { exit(0) }
-          }
+    <!-- 主界面 -->
+    <div class="main-container">
+        <div class="header">
+            <button class="menu-toggle" id="menuToggleBtn">☰</button>
+            <span class="title">小小怨AI</span>
+            <button class="settings-btn" id="settingsBtn">⚙️</button>
+        </div>
+        <div class="chat-area" id="chatArea">
+            <div class="message ai">你好！我是小小怨AI，我的主人是 CY。你可以问我任何问题，我还会算数哦～左滑或点左上角按钮可打开菜单。</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="messageInput" class="input-field" placeholder="输入消息...">
+            <button id="sendBtn" class="send-btn">➤</button>
+        </div>
+    </div>
 
-          class ChatViewController: UIViewController, WKScriptMessageHandler {
-              var webView: WKWebView!
-              override func viewDidLoad() {
-                  super.viewDidLoad()
-                  let config = WKWebViewConfiguration()
-                  config.userContentController.add(self, name: "exitApp")
-                  webView = WKWebView(frame: view.bounds, configuration: config)
-                  webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-                  view.addSubview(webView)
+    <!-- 第二界面 -->
+    <div id="secondScreen" class="second-screen">
+        <div class="second-header">
+            <span>第二界面 · 小小怨AI</span>
+            <button class="back-btn" id="backToMain">返回</button>
+        </div>
+        <div class="chat-area" id="secondChatArea">
+            <div class="message ai">欢迎来到第二界面，这里也可以聊天。</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="secondInput" class="input-field" placeholder="输入消息...">
+            <button id="secondSendBtn" class="send-btn">➤</button>
+        </div>
+    </div>
 
-                  let html = """
-                  <!DOCTYPE html>
-                  <html>
-                  <head>
-                      <meta charset="UTF-8">
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-                      <title>小小怨AI · 聊天核心</title>
-                      <style>
-                          * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-                          body {
-                              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                              background: #ffffff;
-                              height: 100vh;
-                              overflow: hidden;
-                              display: flex;
-                              flex-direction: column;
-                          }
+    <!-- 设置弹窗 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-card">
+            <h3>设置</h3>
+            <button id="clearAllChatsBtn">清除所有聊天记录</button>
+            <button id="closeModalBtn">关闭</button>
+        </div>
+    </div>
 
-                          /* 顶部导航 */
-                          .nav-bar {
-                              background: #ffffff;
-                              padding: 12px 20px;
-                              display: flex;
-                              justify-content: space-between;
-                              align-items: center;
-                              border-bottom: 1px solid #e9e9ef;
-                          }
-                          .nav-title {
-                              font-size: 18px;
-                              font-weight: 600;
-                              color: #000000;
-                          }
-                          .settings-icon {
-                              font-size: 24px;
-                              background: none;
-                              border: none;
-                              cursor: pointer;
-                              width: 40px;
-                              height: 40px;
-                              border-radius: 30px;
-                              display: flex;
-                              align-items: center;
-                              justify-content: center;
-                          }
-                          .settings-icon:active { background: #f2f2f6; }
+    <script>
+        (function() {
+            // ---------- DOM 元素 ----------
+            const sidebar = document.getElementById('sidebar');
+            const menuToggleBtn = document.getElementById('menuToggleBtn');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsModal = document.getElementById('settingsModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const chatArea = document.getElementById('chatArea');
+            const secondScreen = document.getElementById('secondScreen');
+            const secondChatArea = document.getElementById('secondChatArea');
+            const backToMain = document.getElementById('backToMain');
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const secondInput = document.getElementById('secondInput');
+            const secondSendBtn = document.getElementById('secondSendBtn');
+            const newChatBtn = document.getElementById('newChatBtn');
+            const clearChatBtn = document.getElementById('clearChatBtn');
+            const exportChatBtn = document.getElementById('exportChatBtn');
+            const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+            const clearAllChatsBtn = document.getElementById('clearAllChatsBtn');
 
-                          /* 聊天区域 */
-                          .chat-area {
-                              flex: 1;
-                              overflow-y: auto;
-                              padding: 16px;
-                              display: flex;
-                              flex-direction: column;
-                              gap: 12px;
-                          }
-                          .message {
-                              max-width: 80%;
-                              padding: 10px 16px;
-                              border-radius: 20px;
-                              font-size: 15px;
-                              line-height: 1.4;
-                              word-break: break-word;
-                          }
-                          .message.user {
-                              align-self: flex-end;
-                              background-color: #007aff;
-                              color: white;
-                              border-bottom-right-radius: 4px;
-                          }
-                          .message.ai {
-                              align-self: flex-start;
-                              background-color: #e5e5ea;
-                              color: black;
-                              border-bottom-left-radius: 4px;
-                          }
+            // ---------- 数据 ----------
+            let mainMessages = JSON.parse(localStorage.getItem('mainMessages') || '[]');
+            let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
 
-                          /* 输入区域 */
-                          .input-area {
-                              display: flex;
-                              padding: 10px 12px;
-                              background: #ffffff;
-                              border-top: 1px solid #e9e9ef;
-                              gap: 8px;
-                              align-items: center;
-                          }
-                          .input-field {
-                              flex: 1;
-                              background: #f2f2f6;
-                              border: none;
-                              border-radius: 22px;
-                              padding: 10px 16px;
-                              font-size: 16px;
-                              outline: none;
-                              font-family: inherit;
-                          }
-                          .input-field:focus {
-                              background: #ffffff;
-                              outline: 1px solid #007aff;
-                          }
-                          .send-button {
-                              background-color: #007aff;
-                              border: none;
-                              border-radius: 30px;
-                              width: 44px;
-                              height: 44px;
-                              color: white;
-                              font-size: 18px;
-                              cursor: pointer;
-                              display: flex;
-                              align-items: center;
-                              justify-content: center;
-                          }
-                          .send-button:active {
-                              opacity: 0.7;
-                              transform: scale(0.96);
-                          }
+            // ---------- 辅助函数 ----------
+            function renderMain() {
+                chatArea.innerHTML = '';
+                mainMessages.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'message ' + msg.role;
+                    div.textContent = msg.content;
+                    chatArea.appendChild(div);
+                });
+                chatArea.scrollTop = chatArea.scrollHeight;
+                localStorage.setItem('mainMessages', JSON.stringify(mainMessages));
+            }
+            function renderSecond() {
+                secondChatArea.innerHTML = '';
+                secondMessages.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'message ' + msg.role;
+                    div.textContent = msg.content;
+                    secondChatArea.appendChild(div);
+                });
+                secondChatArea.scrollTop = secondChatArea.scrollHeight;
+                localStorage.setItem('secondMessages', JSON.stringify(secondMessages));
+            }
 
-                          /* 左侧边栏菜单 (保留滑动功能，但内容精简) */
-                          .sidebar {
-                              position: fixed;
-                              left: 0;
-                              top: 0;
-                              width: 260px;
-                              height: 100%;
-                              background: rgba(255,255,255,0.98);
-                              backdrop-filter: blur(20px);
-                              padding: 20px;
-                              transform: translateX(-100%);
-                              transition: transform 0.3s ease;
-                              z-index: 1000;
-                              box-shadow: 2px 0 12px rgba(0,0,0,0.1);
-                              display: flex;
-                              flex-direction: column;
-                              gap: 20px;
-                          }
-                          .sidebar.open {
-                              transform: translateX(0);
-                          }
-                          .sidebar button {
-                              background: #f2f2f6;
-                              border: none;
-                              padding: 12px;
-                              border-radius: 28px;
-                              font-size: 16px;
-                              text-align: center;
-                              cursor: pointer;
-                          }
-                          .sidebar button:active { background: #e5e5ea; }
+            // 计算器（支持加减乘除、括号、小数）
+            function evaluateMath(expr) {
+                expr = expr.replace(/\s/g, '');
+                if (!/^[\d\+\-\*\/\.\(\)]+$/.test(expr)) return null;
+                try {
+                    let result = Function('"use strict";return (' + expr + ')')();
+                    if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
+                        return result.toString();
+                    }
+                } catch(e) {}
+                return null;
+            }
 
-                          /* 设置弹窗 */
-                          .modal {
-                              display: none;
-                              position: fixed;
-                              top: 0; left: 0;
-                              width: 100%; height: 100%;
-                              background: rgba(0,0,0,0.4);
-                              justify-content: center;
-                              align-items: center;
-                              z-index: 1100;
-                          }
-                          .modal-card {
-                              background: white;
-                              border-radius: 28px;
-                              padding: 24px;
-                              width: 260px;
-                              text-align: center;
-                              position: relative;
-                              box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-                          }
-                          .close-icon {
-                              position: absolute;
-                              top: 12px;
-                              right: 16px;
-                              font-size: 24px;
-                              cursor: pointer;
-                          }
-                          .modal button {
-                              background: #f2f2f6;
-                              border: none;
-                              padding: 10px;
-                              border-radius: 28px;
-                              margin-top: 16px;
-                              width: 100%;
-                              cursor: pointer;
-                          }
+            // 花言巧语库 + 简单问答
+            const sweetTalk = [
+                "你的眼睛里有星辰大海～✨",
+                "你笑起来真好看，像春天的花一样。",
+                "CY 说过：遇见你是一种幸运。",
+                "你问的问题都很有趣，让我变得更加聪明。",
+                "和你聊天是我一天中最开心的事💚",
+                "你的思考方式很独特，我喜欢！",
+                "你就像那晚的星星，璀璨夺目。",
+                "小小怨AI 永远陪着你～"
+            ];
+            const greetings = ["你好呀！我是小小怨AI，主人是 CY。", "嗨！今天想聊什么？", "在的在的，有什么可以帮你？"];
+            const farewells = ["再见啦，记得常来找我玩～", "拜拜，下次再聊！", "期待和你再次相遇💚"];
+            const thanks = ["不客气，为你服务是我的荣幸！", "不用谢，开心就好～", "你太客气啦！"];
 
-                          /* 开屏动画 */
-                          .splash {
-                              position: fixed;
-                              top: 0; left: 0;
-                              width: 100%; height: 100%;
-                              background: black;
-                              z-index: 2000;
-                              display: flex;
-                              justify-content: center;
-                              align-items: center;
-                              animation: fadeOut 2s forwards;
-                          }
-                          .scan-circle {
-                              width: 180px;
-                              height: 180px;
-                              border-radius: 50%;
-                              border: 3px solid #4cd964;
-                              box-shadow: 0 0 20px #4cd964;
-                              position: relative;
-                          }
-                          .scan-line {
-                              position: absolute;
-                              top: 0; left: 0;
-                              width: 100%;
-                              height: 2px;
-                              background: #4cd964;
-                              animation: scan 1.5s infinite;
-                          }
-                          @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
-                          @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+            function getRichReply(text) {
+                const lower = text.toLowerCase().trim();
+                if (lower.match(/^(你好|嗨|hi|hello|在吗|您好)$/)) return greetings[Math.floor(Math.random() * greetings.length)];
+                if (lower.includes('你是谁') || lower.includes('介绍')) return "我是小小怨AI，主人是 CY。我会算数、聊天、讲笑话，还会花言巧语～";
+                if (lower.includes('主人') || lower.includes('cy')) return "我的主人是伟大的 CY，他赋予了我智慧和幽默。";
+                if (lower.includes('谢谢') || lower.includes('感谢')) return thanks[Math.floor(Math.random() * thanks.length)];
+                if (lower.includes('再见') || lower.includes('拜拜') || lower.includes('88')) return farewells[Math.floor(Math.random() * farewells.length)];
+                if (lower.includes('喜欢')) return "我也喜欢你呀！你是我最重要的朋友💚";
+                if (lower.includes('笑话')) return "为什么程序员总是分不清万圣节和圣诞节？因为 Oct 31 = Dec 25！😂";
+                if (lower.includes('花言巧语')) return sweetTalk[Math.floor(Math.random() * sweetTalk.length)];
+                return null;
+            }
 
-                          /* 第二界面容器 */
-                          .second-screen {
-                              display: none;
-                              position: fixed;
-                              top: 0; left: 0;
-                              width: 100%; height: 100%;
-                              background: white;
-                              z-index: 1500;
-                              flex-direction: column;
-                          }
-                          .second-header {
-                              padding: 16px;
-                              background: white;
-                              border-bottom: 1px solid #eee;
-                              display: flex;
-                              justify-content: space-between;
-                              align-items: center;
-                          }
-                      </style>
-                  </head>
-                  <body>
-                      <!-- 开屏动画 -->
-                      <div id="splash" class="splash">
-                          <div class="scan-circle"><div class="scan-line"></div></div>
-                      </div>
+            function generateReply(userText) {
+                // 1. 计算器
+                let mathResult = evaluateMath(userText);
+                if (mathResult !== null) return "计算结果：" + userText + " = " + mathResult;
+                // 2. 特殊问答
+                let rich = getRichReply(userText);
+                if (rich) return rich;
+                // 3. 随机花言巧语 + 通用回复
+                const generic = [
+                    "这个问题很有意思，能多说一点吗？",
+                    "CY 说：好奇心是进步的源泉～",
+                    "让我想想...你说得很对！",
+                    "你的想法很独特，我喜欢听你说话。",
+                    "虽然我还在学习，但我会努力回答的。"
+                ];
+                return sweetTalk[Math.floor(Math.random() * sweetTalk.length)] + " " + generic[Math.floor(Math.random() * generic.length)];
+            }
 
-                      <!-- 左侧边栏 (滑动菜单) -->
-                      <div id="sidebar" class="sidebar">
-                          <h3>功能菜单</h3>
-                          <button id="openSecondFromSidebar">第二界面</button>
-                          <button id="clearAllChat">清空聊天记录</button>
-                          <button id="closeSidebarBtn">关闭菜单</button>
-                      </div>
+            // 添加消息主界面
+            function addMainMessage(role, content) {
+                mainMessages.push({ role, content });
+                renderMain();
+            }
+            function addSecondMessage(role, content) {
+                secondMessages.push({ role, content });
+                renderSecond();
+            }
 
-                      <!-- 主聊天界面 -->
-                      <div class="nav-bar">
-                          <span class="nav-title">小小怨AI</span>
-                          <button class="settings-icon" id="menuButton">☰</button>
-                      </div>
-                      <div id="chatArea" class="chat-area">
-                          <div class="message ai">你好，我是小小怨AI。右滑打开菜单，输入消息即可聊天。</div>
-                      </div>
-                      <div class="input-area">
-                          <input type="text" id="messageInput" class="input-field" placeholder="输入消息..." autofocus>
-                          <button id="sendButton" class="send-button">➤</button>
-                      </div>
+            // 发送主消息
+            function sendMain() {
+                let txt = messageInput.value.trim();
+                if (!txt) return;
+                // 检测 ABC（大写）进入第二界面
+                if (txt === "ABC") {
+                    secondScreen.style.display = 'flex';
+                    messageInput.value = '';
+                    return;
+                }
+                addMainMessage('user', txt);
+                messageInput.value = '';
+                setTimeout(() => {
+                    let reply = generateReply(txt);
+                    addMainMessage('ai', reply);
+                }, 300);
+            }
+            // 发送第二界面消息
+            function sendSecond() {
+                let txt = secondInput.value.trim();
+                if (!txt) return;
+                addSecondMessage('user', txt);
+                secondInput.value = '';
+                setTimeout(() => {
+                    let reply = generateReply(txt);
+                    addSecondMessage('ai', reply);
+                }, 300);
+            }
 
-                      <!-- 设置弹窗 (右上角设置) -->
-                      <div id="settingsModal" class="modal">
-                          <div class="modal-card">
-                              <span class="close-icon" id="closeModal">✕</span>
-                              <h3>设置</h3>
-                              <button id="clearChatModalBtn">清空聊天</button>
-                              <button id="exitAppModalBtn">退出应用</button>
-                          </div>
-                      </div>
+            // 新建对话（清空主界面消息）
+            function newChat() {
+                if (mainMessages.length > 0 && confirm('新建对话会清空当前聊天记录，确定吗？')) {
+                    mainMessages = [];
+                    renderMain();
+                    addMainMessage('ai', '新对话已创建！你好～');
+                } else if (mainMessages.length === 0) {
+                    addMainMessage('ai', '已经是最新对话啦～');
+                }
+                closeSidebar();
+            }
+            function clearCurrentChat() {
+                if (mainMessages.length > 0 && confirm('清空当前对话？')) {
+                    mainMessages = [];
+                    renderMain();
+                    addMainMessage('ai', '对话已清空。');
+                }
+                closeSidebar();
+            }
+            function exportChat() {
+                if (mainMessages.length === 0) { alert('没有可导出的对话'); return; }
+                let text = "小小怨AI 对话记录\n" + new Date().toLocaleString() + "\n\n";
+                mainMessages.forEach(m => {
+                    text += (m.role === 'user' ? '我：' : '小小怨AI：') + m.content + "\n";
+                });
+                const blob = new Blob([text], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'chat.txt';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                closeSidebar();
+            }
+            function clearAllChats() {
+                if (confirm('清除所有聊天记录（主界面和第二界面）？')) {
+                    mainMessages = [];
+                    secondMessages = [];
+                    renderMain();
+                    renderSecond();
+                    addMainMessage('ai', '所有记录已清空。');
+                }
+                closeSettings();
+            }
 
-                      <!-- 第二界面 -->
-                      <div id="secondScreen" class="second-screen">
-                          <div class="second-header">
-                              <span>第二界面</span>
-                              <button id="closeSecondScreen" style="background:#f2f2f6; border:none; border-radius:20px; padding:6px 12px;">返回</button>
-                          </div>
-                          <div id="secondChatArea" class="chat-area" style="flex:1;">
-                              <div class="message ai">欢迎来到第二界面，这里也可以单独聊天。</div>
-                          </div>
-                          <div class="input-area">
-                              <input type="text" id="secondInput" class="input-field" placeholder="输入消息...">
-                              <button id="secondSendBtn" class="send-button">➤</button>
-                          </div>
-                      </div>
+            // 侧边栏滑动控制
+            let touchStartX = 0;
+            let isSidebarOpen = false;
+            function openSidebar() { sidebar.classList.add('open'); isSidebarOpen = true; }
+            function closeSidebar() { sidebar.classList.remove('open'); isSidebarOpen = false; }
+            function toggleSidebar() { isSidebarOpen ? closeSidebar() : openSidebar(); }
 
-                      <script>
-                          (function() {
-                              // ---------- 基础界面元素 ----------
-                              const chatArea = document.getElementById('chatArea');
-                              const secondChatArea = document.getElementById('secondChatArea');
-                              const input = document.getElementById('messageInput');
-                              const secondInput = document.getElementById('secondInput');
-                              const sendBtn = document.getElementById('sendButton');
-                              const secondSendBtn = document.getElementById('secondSendBtn');
-                              const menuBtn = document.getElementById('menuButton');
-                              const sidebar = document.getElementById('sidebar');
-                              const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-                              const settingsModal = document.getElementById('settingsModal');
-                              const closeModal = document.getElementById('closeModal');
-                              const clearChatModalBtn = document.getElementById('clearChatModalBtn');
-                              const exitAppModalBtn = document.getElementById('exitAppModalBtn');
-                              const clearAllChat = document.getElementById('clearAllChat');
-                              const openSecondFromSidebar = document.getElementById('openSecondFromSidebar');
-                              const secondScreen = document.getElementById('secondScreen');
-                              const closeSecondScreen = document.getElementById('closeSecondScreen');
+            document.body.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+            }, { passive: false });
+            document.body.addEventListener('touchmove', (e) => {
+                const deltaX = e.touches[0].clientX - touchStartX;
+                if (touchStartX < 30 && deltaX > 20 && !isSidebarOpen) {
+                    openSidebar();
+                    e.preventDefault();
+                }
+                if (deltaX < -20 && isSidebarOpen) {
+                    closeSidebar();
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            document.addEventListener('click', (e) => {
+                if (isSidebarOpen && !sidebar.contains(e.target) && e.target !== menuToggleBtn) closeSidebar();
+            });
 
-                              // ---------- 数据存储 ----------
-                              let messages = JSON.parse(localStorage.getItem('mainChat') || '[]');
-                              let secondMessages = JSON.parse(localStorage.getItem('secondChat') || '[]');
+            // 按钮事件
+            menuToggleBtn.onclick = toggleSidebar;
+            closeSidebarBtn.onclick = closeSidebar;
+            newChatBtn.onclick = newChat;
+            clearChatBtn.onclick = clearCurrentChat;
+            exportChatBtn.onclick = exportChat;
 
-                              // ---------- 辅助函数 ----------
-                              function renderMessages() {
-                                  chatArea.innerHTML = '';
-                                  messages.forEach(msg => {
-                                      const div = document.createElement('div');
-                                      div.className = 'message ' + msg.role;
-                                      div.textContent = msg.content;
-                                      chatArea.appendChild(div);
-                                  });
-                                  chatArea.scrollTop = chatArea.scrollHeight;
-                                  localStorage.setItem('mainChat', JSON.stringify(messages));
-                              }
-                              function renderSecondMessages() {
-                                  secondChatArea.innerHTML = '';
-                                  secondMessages.forEach(msg => {
-                                      const div = document.createElement('div');
-                                      div.className = 'message ' + msg.role;
-                                      div.textContent = msg.content;
-                                      secondChatArea.appendChild(div);
-                                  });
-                                  secondChatArea.scrollTop = secondChatArea.scrollHeight;
-                                  localStorage.setItem('secondChat', JSON.stringify(secondMessages));
-                              }
-                              function addMessage(role, content, isSecond = false) {
-                                  if (isSecond) {
-                                      secondMessages.push({ role, content });
-                                      renderSecondMessages();
-                                  } else {
-                                      messages.push({ role, content });
-                                      renderMessages();
-                                  }
-                              }
+            // 设置
+            settingsBtn.onclick = () => { settingsModal.style.display = 'flex'; closeSidebar(); };
+            closeModalBtn.onclick = () => { settingsModal.style.display = 'none'; };
+            clearAllChatsBtn.onclick = clearAllChats;
+            window.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; };
 
-                              // AI 回复逻辑（保留基本能力）
-                              function aiReply(userText) {
-                                  const lower = userText.toLowerCase();
-                                  if (lower.includes('你好')) return '你好呀！我是小小怨AI，很高兴见到你。';
-                                  if (lower.includes('你是谁')) return '我是小小怨AI，由CY创造。我能聊天、算数，请随意提问。';
-                                  if (lower.includes('计算') || /[\\d]+[\\+\\-\\*\\/][\\d]+/.test(userText)) {
-                                      try {
-                                          let result = eval(userText);
-                                          return '计算结果：' + result;
-                                      } catch(e) { return '算式有问题，试试 1+1 这样的格式。'; }
-                                  }
-                                  return '收到消息：「' + userText + '」\n我会努力学习，陪你聊天解闷。';
-                              }
+            // 第二界面
+            backToMain.onclick = () => { secondScreen.style.display = 'none'; };
+            // 主界面发送按钮和回车
+            sendBtn.onclick = sendMain;
+            messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMain(); });
+            secondSendBtn.onclick = sendSecond;
+            secondInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendSecond(); });
 
-                              // 发送消息主界面
-                              function sendMainMessage() {
-                                  let txt = input.value.trim();
-                                  if (!txt) return;
-                                  addMessage('user', txt, false);
-                                  input.value = '';
-                                  setTimeout(() => {
-                                      let reply = aiReply(txt);
-                                      addMessage('ai', reply, false);
-                                  }, 300);
-                              }
-                              // 发送第二界面消息
-                              function sendSecondMessage() {
-                                  let txt = secondInput.value.trim();
-                                  if (!txt) return;
-                                  addMessage('user', txt, true);
-                                  secondInput.value = '';
-                                  setTimeout(() => {
-                                      let reply = aiReply(txt);
-                                      addMessage('ai', reply, true);
-                                  }, 300);
-                              }
+            // 启动动画2秒后消失
+            setTimeout(() => { const s = document.getElementById('splash'); if (s) s.remove(); }, 2000);
 
-                              // 清空聊天
-                              function clearChat() {
-                                  messages = [];
-                                  renderMessages();
-                                  settingsModal.style.display = 'none';
-                              }
-
-                              // 侧边栏滑动控制
-                              let touchStartX = 0;
-                              let isSidebarOpen = false;
-                              function openSidebar() { sidebar.classList.add('open'); isSidebarOpen = true; }
-                              function closeSidebar() { sidebar.classList.remove('open'); isSidebarOpen = false; }
-
-                              // 触摸事件监听
-                              document.body.addEventListener('touchstart', (e) => {
-                                  touchStartX = e.touches[0].clientX;
-                              }, { passive: false });
-                              document.body.addEventListener('touchmove', (e) => {
-                                  const deltaX = e.touches[0].clientX - touchStartX;
-                                  if (touchStartX < 25 && deltaX > 25 && !isSidebarOpen) {
-                                      openSidebar();
-                                      e.preventDefault();
-                                  }
-                                  if (deltaX < -25 && isSidebarOpen) {
-                                      closeSidebar();
-                                      e.preventDefault();
-                                  }
-                              }, { passive: false });
-                              // 点击空白关闭侧边栏
-                              document.addEventListener('click', (e) => {
-                                  if (isSidebarOpen && !sidebar.contains(e.target) && e.target !== menuBtn) closeSidebar();
-                              });
-                              menuBtn.addEventListener('click', () => {
-                                  if (isSidebarOpen) closeSidebar();
-                                  else openSidebar();
-                              });
-                              closeSidebarBtn.addEventListener('click', closeSidebar);
-
-                              // 第二界面逻辑
-                              openSecondFromSidebar.addEventListener('click', () => {
-                                  closeSidebar();
-                                  secondScreen.style.display = 'flex';
-                              });
-                              closeSecondScreen.addEventListener('click', () => { secondScreen.style.display = 'none'; });
-
-                              // 设置弹窗
-                              const settingsIcon = document.querySelector('.settings-icon:not(#menuButton)'); // 右上角齿轮
-                              if (settingsIcon) {
-                                  settingsIcon.addEventListener('click', () => { settingsModal.style.display = 'flex'; });
-                              }
-                              closeModal.addEventListener('click', () => { settingsModal.style.display = 'none'; });
-                              window.addEventListener('click', (e) => {
-                                  if (e.target === settingsModal) settingsModal.style.display = 'none';
-                              });
-                              clearChatModalBtn.addEventListener('click', clearChat);
-                              clearAllChat.addEventListener('click', clearChat);
-                              exitAppModalBtn.addEventListener('click', () => {
-                                  if (window.webkit && window.webkit.messageHandlers.exitApp) {
-                                      window.webkit.messageHandlers.exitApp.postMessage(null);
-                                  } else { alert('退出功能需要原生环境'); }
-                              });
-
-                              // 绑定发送事件
-                              sendBtn.addEventListener('click', sendMainMessage);
-                              secondSendBtn.addEventListener('click', sendSecondMessage);
-                              input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMainMessage(); });
-                              secondInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendSecondMessage(); });
-
-                              // 移除开屏动画
-                              setTimeout(() => { const s = document.getElementById('splash'); if (s) s.remove(); }, 2000);
-
-                              // 初始化渲染
-                              renderMessages();
-                              renderSecondMessages();
-                              console.log('应用已启动，聊天功能正常，侧边栏滑动可用');
-                          })();
-                      </script>
-                  </body>
-                  </html>
-                  """
-                  webView.loadHTMLString(html, baseURL: nil)
-              }
-              func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-                  if message.name == "exitApp" {
-                      (UIApplication.shared.delegate as? AppDelegate)?.exitApp()
-                  }
-              }
-              override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .all }
-          }
-          EOF
-
-          cat > main.swift << 'EOF'
-          import UIKit
-          UIApplicationMain(CommandLine.argc, CommandLine.unsafeArgv, nil, NSStringFromClass(AppDelegate.self))
-          EOF
-
-          cat > Info.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleDevelopmentRegion</key>
-              <string>en</string>
-              <key>CFBundleExecutable</key>
-              <string>XiaoxiaoYuanAI</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.xiaoxiaoyuan.ai</string>
-              <key>CFBundleInfoDictionaryVersion</key>
-              <string>6.0</string>
-              <key>CFBundleName</key>
-              <string>小小怨AI</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>1.0</string>
-              <key>CFBundleVersion</key>
-              <string>1</string>
-              <key>UILaunchStoryboardName</key>
-              <string>LaunchScreen</string>
-              <key>UISupportedInterfaceOrientations</key>
-              <array>
-                  <string>UIInterfaceOrientationPortrait</string>
-                  <string>UIInterfaceOrientationLandscapeLeft</string>
-                  <string>UIInterfaceOrientationLandscapeRight</string>
-              </array>
-          </dict>
-          </plist>
-          EOF
-
-          mkdir -p Base.lproj
-          cat > Base.lproj/LaunchScreen.storyboard << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
-              <dependencies>
-                  <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21679"/>
-              </dependencies>
-              <scenes>
-                  <scene sceneID="EHf-IW-A2E">
-                      <objects>
-                          <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                              <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                                  <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
-                                  <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                  <subviews>
-                                      <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="小小怨 AI" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
-                                          <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
-                                          <fontDescription key="fontDescription" type="boldSystem" pointSize="30"/>
-                                          <color key="textColor" red="0.05" green="0.52" blue="0.53" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                          <nil key="highlightedColor"/>
-                                      </label>
-                                  </subviews>
-                                  <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
-                                  <constraints>
-                                      <constraint firstItem="GJd-Yh-RWb" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="7yF-2U-9Jw"/>
-                                      <constraint firstItem="GJd-Yh-RWb" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="TcB-0d-MaD"/>
-                                  </constraints>
-                              </view>
-                          </viewController>
-                          <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
-                      </objects>
-                      <point key="canvasLocation" x="53" y="375"/>
-                  </scene>
-              </scenes>
-          </document>
-          EOF
-          cd ..
-
-      - name: Compile and Package IPA
-        run: |
-          mkdir -p Payload/XiaoxiaoYuanAI.app
-          swiftc XiaoxiaoYuanAI/AppDelegate.swift XiaoxiaoYuanAI/main.swift -o Payload/XiaoxiaoYuanAI.app/XiaoxiaoYuanAI -target arm64-apple-ios13.0 -sdk $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework WebKit
-          cp XiaoxiaoYuanAI/Info.plist Payload/XiaoxiaoYuanAI.app/
-          cp -r XiaoxiaoYuanAI/Base.lproj Payload/XiaoxiaoYuanAI.app/
-          zip -r XiaoxiaoYuanAI.ipa Payload
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: XiaoxiaoYuanAI-IPA
-          path: XiaoxiaoYuanAI.ipa
+            // 初始化渲染
+            renderMain();
+            renderSecond();
+            console.log('小小怨AI 已启动 | 支持数学计算 | 输入 ABC 进入第二界面（无提示）');
+        })();
+    </script>
+</body>
+</html>
