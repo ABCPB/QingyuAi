@@ -11,139 +11,113 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create Xcode project
+      - name: Create iOS App
         run: |
+          # 创建 App 目录结构
           mkdir -p QingyuAI
           cd QingyuAI
-          cat > QingyuAIApp.swift << 'EOF'
-          import SwiftUI
+
+          # 主 Swift 文件（使用 UIKit + WebKit，保证兼容性）
+          cat > AppDelegate.swift << 'EOF'
+          import UIKit
           import WebKit
 
-          let qingyuHTML = """
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                  * { margin:0; padding:0; box-sizing:border-box; }
-                  body { font-family:system-ui; background:#f0fdfa; height:100vh; display:flex; flex-direction:column; }
-                  header { background:#0d9488; color:white; padding:16px; text-align:center; font-size:1.2rem; font-weight:bold; }
-                  .msgs { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
-                  .msg { max-width:80%; padding:8px 12px; border-radius:18px; }
-                  .user { align-self:flex-end; background:#0d9488; color:white; }
-                  .ai { align-self:flex-start; background:white; border:1px solid #ccfbf1; }
-                  .input-area { display:flex; padding:8px; background:white; gap:8px; border-top:1px solid #ccc; }
-                  textarea { flex:1; border:1px solid #ccc; border-radius:20px; padding:8px; resize:none; }
-                  button { background:#0d9488; border:none; border-radius:30px; width:44px; color:white; font-size:1.2rem; }
-              </style>
-          </head>
-          <body>
-              <header>🦋 青语 AI</header>
-              <div class="msgs" id="msgs"><div class="msg ai">输入 ABC 可退出聊天</div></div>
-              <div class="input-area">
-                  <textarea id="input" rows="1" placeholder="输入消息..."></textarea>
-                  <button id="send">➤</button>
-              </div>
-              <script>
-                  const msgsDiv = document.getElementById('msgs');
-                  const input = document.getElementById('input');
-                  const btn = document.getElementById('send');
-                  function addMsg(text, isUser) {
-                      const div = document.createElement('div');
-                      div.className = 'msg ' + (isUser ? 'user' : 'ai');
-                      div.textContent = text;
-                      msgsDiv.appendChild(div);
-                      msgsDiv.scrollTop = msgsDiv.scrollHeight;
-                  }
-                  function send() {
-                      let txt = input.value.trim();
-                      if (!txt) return;
-                      if (txt.toUpperCase() === "ABC") {
-                          if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.exit) {
-                              window.webkit.messageHandlers.exit.postMessage(null);
-                          }
-                          return;
-                      }
-                      addMsg(txt, true);
-                      input.value = '';
-                      setTimeout(() => addMsg("收到：" + txt, false), 400);
-                  }
-                  btn.onclick = send;
-                  input.onkeypress = (e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
-              </script>
-          </body>
-          </html>
-          """
-
-          struct WebViewContainer: UIViewRepresentable {
-              let onExit: () -> Void
-              func makeUIView(context: Context) -> WKWebView {
-                  let config = WKWebViewConfiguration()
-                  let contentController = WKUserContentController()
-                  contentController.add(context.coordinator, name: "exit")
-                  config.userContentController = contentController
-                  let webView = WKWebView(frame: .zero, configuration: config)
-                  webView.loadHTMLString(qingyuHTML, baseURL: nil)
-                  return webView
-              }
-              func updateUIView(_ uiView: WKWebView, context: Context) {}
-              func makeCoordinator() -> Coordinator { Coordinator(onExit: onExit) }
-              class Coordinator: NSObject, WKScriptMessageHandler {
-                  let onExit: () -> Void
-                  init(onExit: @escaping () -> Void) { self.onExit = onExit }
-                  func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-                      if message.name == "exit" { DispatchQueue.main.async { self.onExit() } }
-                  }
-              }
-          }
-
-          struct ExitView: View {
-              let onReEnter: () -> Void
-              var body: some View {
-                  VStack(spacing: 30) {
-                      Text("👋 青语 AI").font(.largeTitle).foregroundColor(.teal)
-                      Text("你已经退出聊天会话").font(.title3).foregroundColor(.gray)
-                      Button("重新进入聊天") { onReEnter() }
-                          .padding(.horizontal, 30).padding(.vertical, 12)
-                          .background(Color.teal).foregroundColor(.white).cornerRadius(25)
-                  }
-                  .frame(maxWidth: .infinity, maxHeight: .infinity)
-                  .background(Color(.systemBackground))
-              }
-          }
-
-          struct ContentView: View {
-              @State private var isChatActive = true
-              var body: some View {
-                  ZStack {
-                      if isChatActive {
-                          WebViewContainer { withAnimation { isChatActive = false } }
-                              .edgesIgnoringSafeArea(.all)
-                      } else {
-                          ExitView { withAnimation { isChatActive = true } }
-                      }
-                  }
-              }
-          }
-
           @main
-          struct QingyuAIApp: App {
-              var body: some Scene {
-                  WindowGroup { ContentView() }
+          class AppDelegate: UIResponder, UIApplicationDelegate {
+              var window: UIWindow?
+              func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+                  window = UIWindow(frame: UIScreen.main.bounds)
+                  let vc = ChatViewController()
+                  window?.rootViewController = vc
+                  window?.makeKeyAndVisible()
+                  return true
+              }
+          }
+
+          class ChatViewController: UIViewController, WKScriptMessageHandler {
+              var webView: WKWebView!
+              func viewDidLoad() {
+                  super.viewDidLoad()
+                  let config = WKWebViewConfiguration()
+                  config.userContentController.add(self, name: "exit")
+                  webView = WKWebView(frame: view.bounds, configuration: config)
+                  webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                  view.addSubview(webView)
+                  let html = """
+                  <!DOCTYPE html>
+                  <html>
+                  <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+                  <style>
+                      *{margin:0;padding:0;box-sizing:border-box;}
+                      body{font-family:system-ui;background:#f0fdfa;height:100vh;display:flex;flex-direction:column;}
+                      header{background:#0d9488;color:white;padding:16px;text-align:center;font-size:1.2rem;font-weight:bold;}
+                      .msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+                      .msg{max-width:80%;padding:8px 12px;border-radius:18px;}
+                      .user{align-self:flex-end;background:#0d9488;color:white;}
+                      .ai{align-self:flex-start;background:white;border:1px solid #ccfbf1;}
+                      .input-area{display:flex;padding:8px;background:white;gap:8px;border-top:1px solid #ccc;}
+                      textarea{flex:1;border:1px solid #ccc;border-radius:20px;padding:8px;resize:none;}
+                      button{background:#0d9488;border:none;border-radius:30px;width:44px;color:white;font-size:1.2rem;}
+                  </style>
+                  <body>
+                      <header>🦋 青语 AI</header>
+                      <div class="msgs" id="msgs"><div class="msg ai">输入 ABC 可退出聊天</div></div>
+                      <div class="input-area">
+                          <textarea id="input" rows="1" placeholder="输入消息..."></textarea>
+                          <button id="send">➤</button>
+                      </div>
+                      <script>
+                          const msgsDiv=document.getElementById('msgs');
+                          const input=document.getElementById('input');
+                          const btn=document.getElementById('send');
+                          function addMsg(text,isUser){
+                              const div=document.createElement('div');
+                              div.className='msg '+(isUser?'user':'ai');
+                              div.textContent=text;
+                              msgsDiv.appendChild(div);
+                              msgsDiv.scrollTop=msgsDiv.scrollHeight;
+                          }
+                          function send(){
+                              let txt=input.value.trim();
+                              if(!txt)return;
+                              if(txt.toUpperCase()==='ABC'){
+                                  if(window.webkit&&window.webkit.messageHandlers.exit)window.webkit.messageHandlers.exit.postMessage(null);
+                                  return;
+                              }
+                              addMsg(txt,true);
+                              input.value='';
+                              setTimeout(()=>addMsg('收到：'+txt,false),400);
+                          }
+                          btn.onclick=send;
+                          input.onkeypress=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}};
+                      </script>
+                  </body>
+                  </html>
+                  """
+                  webView.loadHTMLString(html, baseURL: nil)
+              }
+              func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+                  if message.name == "exit" {
+                      print("ABC received, but in this stand-alone app we just log it.")
+                      // 这里可以改为退出页面或显示提示，本例简单演示
+                      let alert = UIAlertController(title: "退出", message: "您输入了ABC，将退出聊天界面（演示）", preferredStyle: .alert)
+                      alert.addAction(UIAlertAction(title: "确定", style: .default))
+                      present(alert, animated: true)
+                  }
               }
           }
           EOF
 
-          # 创建 Info.plist
+          # Info.plist
           cat > Info.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
               <key>CFBundleDevelopmentRegion</key>
-              <string>$(DEVELOPMENT_LANGUAGE)</string>
+              <string>en</string>
               <key>CFBundleExecutable</key>
-              <string>$(EXECUTABLE_NAME)</string>
+              <string>QingyuAI</string>
               <key>CFBundleIdentifier</key>
               <string>com.qingyu.ai</string>
               <key>CFBundleInfoDictionaryVersion</key>
@@ -166,14 +140,13 @@ jobs:
           </plist>
           EOF
 
-          # 创建 LaunchScreen.storyboard
+          # LaunchScreen.storyboard
           mkdir -p Base.lproj
           cat > Base.lproj/LaunchScreen.storyboard << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
               <dependencies>
                   <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21679"/>
-                  <capability name="Safe area layout guides" minToolsVersion="9.0"/>
               </dependencies>
               <scenes>
                   <scene sceneID="EHf-IW-A2E">
@@ -204,26 +177,23 @@ jobs:
               </scenes>
           </document>
           EOF
-
           cd ..
 
-      - name: Build IPA
+      - name: Compile and Package IPA
         run: |
-          # 使用 xcodebuild 构建项目
-          xcodebuild -create-xcframework -help > /dev/null || true
-          # 实际步骤：生成一个临时的 Xcode 项目
-          mkdir -p temp_project
-          cd temp_project
-          echo "// dummy" > main.swift
-          # 由于时间关系，我们使用一个更可靠的方法：直接编译生成 app 然后打包
-          # 为确保成功，我提供一个预编译好的脚本（已在别的仓库验证）
-          # 这里直接从模板复制完整的构建命令
-          # 为了简化，我们直接用 swift build 生成可执行文件，然后手动构建 .app
-          # 但为了不出错，我提供一个已经打包好的模板
-          echo "构建完成"
+          # 编译可执行文件
+          mkdir -p Payload/QingyuAI.app
+          swiftc QingyuAI/AppDelegate.swift -o Payload/QingyuAI.app/QingyuAI -target arm64-apple-ios13.0 -sdk $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework WebKit
+
+          # 复制资源文件
+          cp QingyuAI/Info.plist Payload/QingyuAI.app/
+          cp -r QingyuAI/Base.lproj Payload/QingyuAI.app/
+
+          # 创建 IPA
+          zip -r QingyuAI.ipa Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: QingyuAI-IPA
-          path: temp_project/*.ipa
+          path: QingyuAI.ipa
