@@ -13,36 +13,24 @@ jobs:
 
       - name: Create iOS App
         run: |
-          # 创建 App 目录结构
           mkdir -p QingyuAI
           cd QingyuAI
 
-          # 主 Swift 文件（使用 UIKit + WebKit，保证兼容性）
           cat > AppDelegate.swift << 'EOF'
           import UIKit
           import WebKit
 
-          @main
-          class AppDelegate: UIResponder, UIApplicationDelegate {
-              var window: UIWindow?
-              func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-                  window = UIWindow(frame: UIScreen.main.bounds)
-                  let vc = ChatViewController()
-                  window?.rootViewController = vc
-                  window?.makeKeyAndVisible()
-                  return true
-              }
-          }
-
           class ChatViewController: UIViewController, WKScriptMessageHandler {
               var webView: WKWebView!
-              func viewDidLoad() {
+
+              override func viewDidLoad() {
                   super.viewDidLoad()
                   let config = WKWebViewConfiguration()
                   config.userContentController.add(self, name: "exit")
                   webView = WKWebView(frame: view.bounds, configuration: config)
                   webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
                   view.addSubview(webView)
+
                   let html = """
                   <!DOCTYPE html>
                   <html>
@@ -96,19 +84,28 @@ jobs:
                   """
                   webView.loadHTMLString(html, baseURL: nil)
               }
+
               func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
                   if message.name == "exit" {
-                      print("ABC received, but in this stand-alone app we just log it.")
-                      // 这里可以改为退出页面或显示提示，本例简单演示
-                      let alert = UIAlertController(title: "退出", message: "您输入了ABC，将退出聊天界面（演示）", preferredStyle: .alert)
+                      let alert = UIAlertController(title: "退出", message: "您输入了ABC，将退出聊天界面", preferredStyle: .alert)
                       alert.addAction(UIAlertAction(title: "确定", style: .default))
                       present(alert, animated: true)
                   }
               }
           }
+
+          @UIApplicationMain
+          class AppDelegate: UIResponder, UIApplicationDelegate {
+              var window: UIWindow?
+              func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+                  window = UIWindow(frame: UIScreen.main.bounds)
+                  window?.rootViewController = ChatViewController()
+                  window?.makeKeyAndVisible()
+                  return true
+              }
+          }
           EOF
 
-          # Info.plist
           cat > Info.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -140,7 +137,6 @@ jobs:
           </plist>
           EOF
 
-          # LaunchScreen.storyboard
           mkdir -p Base.lproj
           cat > Base.lproj/LaunchScreen.storyboard << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
@@ -181,15 +177,10 @@ jobs:
 
       - name: Compile and Package IPA
         run: |
-          # 编译可执行文件
           mkdir -p Payload/QingyuAI.app
           swiftc QingyuAI/AppDelegate.swift -o Payload/QingyuAI.app/QingyuAI -target arm64-apple-ios13.0 -sdk $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework WebKit
-
-          # 复制资源文件
           cp QingyuAI/Info.plist Payload/QingyuAI.app/
           cp -r QingyuAI/Base.lproj Payload/QingyuAI.app/
-
-          # 创建 IPA
           zip -r QingyuAI.ipa Payload
 
       - name: Upload IPA
