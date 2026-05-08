@@ -36,383 +36,254 @@ jobs:
                   let webView = WKWebView(frame: view.bounds, configuration: config)
                   webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
                   webView.scrollView.delaysContentTouches = false
-                  webView.scrollView.keyboardDismissMode = .none
                   view.addSubview(webView)
 
                   let html = """
                   <!DOCTYPE html>
-                  <html lang="zh-CN">
+                  <html>
                   <head>
                       <meta charset="UTF-8">
                       <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
                       <title>小小怨AI</title>
                       <style>
-                          * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-                          body { font-family: system-ui; background: #f0fdfa; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-                          /* 主界面 */
-                          .main-area { flex: 1; display: flex; flex-direction: column; background: #e8faf6; }
-                          .top-bar { background: white; padding: 12px 16px; border-bottom: 1px solid #ccfbf1; display: flex; justify-content: space-between; align-items: center; }
-                          .current-chat-title { font-weight: 600; font-size: 0.95rem; color: #1e293b; }
-                          .top-bar-actions { display: flex; gap: 6px; }
-                          .btn-icon { width: 34px; height: 34px; border-radius: 8px; background: transparent; border: none; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
-                          .btn-icon:hover { background: #ccfbf1; }
-                          .chat-messages { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg, #e8faf6 0%, #f0fdfa 30%, #f5fdfb 100%); }
-                          .message-row { display: flex; gap: 10px; max-width: 85%; animation: msgIn 0.35s ease; }
-                          .message-row.user { align-self: flex-end; flex-direction: row-reverse; }
-                          .message-row.ai { align-self: flex-start; }
-                          .msg-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-                          .message-row.user .msg-avatar { background: linear-gradient(135deg, #14b8a6, #0d9488); color: white; }
-                          .message-row.ai .msg-avatar { background: #e2e8f0; color: #0f766e; }
-                          .msg-bubble { padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.65; word-break: break-word; }
-                          .message-row.user .msg-bubble { background: #0d9488; color: white; border-bottom-right-radius: 4px; }
-                          .message-row.ai .msg-bubble { background: white; border: 1px solid #ccfbf1; border-bottom-left-radius: 4px; }
-                          .msg-time { font-size: 0.68rem; color: #94a3b8; margin-top: 3px; }
-                          .input-area { padding: 12px 16px 16px; background: white; border-top: 1px solid #ccfbf1; }
-                          .input-wrapper { display: flex; gap: 10px; align-items: flex-end; border: 2px solid #99f6e4; border-radius: 24px; padding: 6px 6px 6px 16px; }
-                          .input-wrapper textarea { flex: 1; border: none; outline: none; resize: none; font-size: 0.9rem; padding: 8px 0; background: transparent; }
-                          .btn-send { width: 42px; height: 42px; border-radius: 30px; background: #0d9488; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
-                          /* 第二界面 */
-                          .second-screen {
-                              position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 200;
-                              display: none; flex-direction: column;
-                          }
-                          .second-header {
-                              background: #0f766e; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-                          }
-                          .second-header .back-btn {
-                              background: white; border: none; border-radius: 20px; padding: 6px 12px; cursor: pointer; color: #0f766e;
-                          }
-                          .second-chat {
-                              flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
-                          }
-                          /* 设置弹窗 */
-                          .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 300; }
-                          .modal { background: white; border-radius: 24px; padding: 24px; max-width: 480px; width: 90%; }
-                          .modal h3 { margin-bottom: 16px; color: #0f766e; }
-                          .modal label { display: block; margin-bottom: 4px; font-weight: 600; }
-                          .modal input, .modal select { width: 100%; padding: 8px 12px; border: 1px solid #99f6e4; border-radius: 8px; margin-bottom: 12px; }
-                          .modal .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
-                          .modal button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; }
-                          .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #134e4a; color: white; padding: 10px 20px; border-radius: 9999px; font-size: 0.85rem; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 400; }
-                          .toast.show { opacity: 1; }
-                          .typing-indicator { display: flex; gap: 4px; align-self: flex-start; margin-left: 44px; }
-                          .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: #2dd4bf; animation: bounce 1.4s infinite; }
-                          @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
+                          * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+                          body { font-family:system-ui; background:#f0fdfa; height:100vh; display:flex; flex-direction:column; }
+                          .main { flex:1; display:flex; flex-direction:column; background:#e8faf6; }
+                          .header { background:white; padding:12px 16px; border-bottom:1px solid #ccfbf1; display:flex; justify-content:space-between; align-items:center; }
+                          .title { font-weight:600; color:#1e293b; }
+                          .btn-icon { width:34px; height:34px; border-radius:8px; background:transparent; border:none; font-size:1rem; cursor:pointer; }
+                          .chat { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+                          .msg { display:flex; gap:10px; max-width:85%; animation:fadeIn 0.3s ease; }
+                          .msg.user { align-self:flex-end; flex-direction:row-reverse; }
+                          .msg.ai { align-self:flex-start; }
+                          .avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#cbd5e1; }
+                          .user .avatar { background:linear-gradient(135deg,#14b8a6,#0d9488); color:white; }
+                          .bubble { padding:10px 14px; border-radius:18px; line-height:1.4; word-break:break-word; }
+                          .user .bubble { background:#0d9488; color:white; border-bottom-right-radius:4px; }
+                          .ai .bubble { background:white; border:1px solid #ccfbf1; border-bottom-left-radius:4px; }
+                          .time { font-size:0.68rem; color:#94a3b8; margin-top:3px; text-align:right; }
+                          .input-area { padding:12px; background:white; border-top:1px solid #ccfbf1; display:flex; gap:10px; }
+                          textarea { flex:1; border:2px solid #99f6e4; border-radius:24px; padding:10px 16px; font-size:0.9rem; resize:none; outline:none; background:white; }
+                          button { background:#0d9488; border:none; border-radius:30px; width:48px; color:white; font-size:1.2rem; cursor:pointer; }
+                          .second-screen { position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:200; display:none; flex-direction:column; }
+                          .second-header { background:#0f766e; color:white; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+                          .back-btn { background:white; border:none; border-radius:20px; padding:6px 12px; cursor:pointer; color:#0f766e; }
+                          .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:300; }
+                          .modal-card { background:white; border-radius:24px; padding:24px; width:280px; text-align:center; }
+                          .typing { display:flex; gap:4px; margin-left:44px; }
+                          .dot { width:6px; height:6px; border-radius:50%; background:#2dd4bf; animation:bounce 1.4s infinite; }
+                          @keyframes bounce { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-8px); } }
+                          @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
                       </style>
                   </head>
                   <body>
-                      <div class="toast" id="toast"></div>
-                      <!-- 主界面 -->
-                      <div class="main-area">
-                          <div class="top-bar">
-                              <span class="current-chat-title" id="currentChatTitle">新对话</span>
-                              <div class="top-bar-actions">
-                                  <button class="btn-icon" onclick="newChat()" title="新建对话">✨</button>
-                                  <button class="btn-icon" onclick="openSettings()" title="设置">⚙️</button>
-                                  <button class="btn-icon" onclick="clearCurrentChat()" title="清空">🧹</button>
+                      <div class="main">
+                          <div class="header">
+                              <span class="title">小小怨AI</span>
+                              <div>
+                                  <button class="btn-icon" id="newBtn" title="新建">✨</button>
+                                  <button class="btn-icon" id="settingsBtn" title="设置">⚙️</button>
+                                  <button class="btn-icon" id="clearBtn" title="清空">🧹</button>
                               </div>
                           </div>
-                          <div class="chat-messages" id="chatMessages"></div>
+                          <div class="chat" id="chat"></div>
                           <div class="input-area">
-                              <div class="input-wrapper">
-                                  <textarea id="userInput" rows="1" placeholder="输入消息... (输入ABC进入第二界面)" onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
-                                  <button class="btn-send" id="btnSend" onclick="sendMessage()">➤</button>
-                              </div>
+                              <textarea id="input" rows="1" placeholder="输入消息... (ABC进入第二界面)"></textarea>
+                              <button id="sendBtn">➤</button>
                           </div>
                       </div>
-                      <!-- 第二界面 -->
                       <div id="secondScreen" class="second-screen">
                           <div class="second-header">
-                              <span>第二界面 · 小小怨AI</span>
-                              <button class="back-btn" id="backMain">返回</button>
+                              <span>第二界面</span>
+                              <button class="back-btn" id="backBtn">返回</button>
                           </div>
-                          <div class="second-chat" id="secondChat"></div>
-                          <div class="input-area" style="border-top:1px solid #eee;">
-                              <div class="input-wrapper">
-                                  <textarea id="secondInput" rows="1" placeholder="输入消息..." onkeydown="handleSecondKeyDown(event)"></textarea>
-                                  <button class="btn-send" id="secondSendBtn">➤</button>
-                              </div>
+                          <div class="chat" id="secondChat"></div>
+                          <div class="input-area">
+                              <textarea id="secondInput" rows="1" placeholder="输入消息..."></textarea>
+                              <button id="secondSendBtn">➤</button>
                           </div>
                       </div>
-                      <!-- 设置弹窗 -->
-                      <div id="settingsModal" class="modal-backdrop" onclick="closeSettingsOutside(event)">
-                          <div class="modal" onclick="event.stopPropagation()">
-                              <h3>⚙️ API 设置</h3>
-                              <label>AI 后端</label>
-                              <select id="apiProvider" onchange="onProviderChange()">
-                                  <option value="local">本地引擎</option>
-                                  <option value="openai">OpenAI</option>
-                                  <option value="deepseek">DeepSeek</option>
-                                  <option value="groq">Groq</option>
-                                  <option value="custom">自定义</option>
-                              </select>
-                              <div id="apiKeyGroup"><label>API Key</label><input type="password" id="apiKey"></div>
-                              <div id="apiUrlGroup" style="display:none"><label>API 端点</label><input type="text" id="apiUrl"></div>
-                              <div id="modelNameGroup"><label>模型名称</label><input type="text" id="modelName"></div>
-                              <div class="btn-row">
-                                  <button onclick="closeSettings()">取消</button>
-                                  <button onclick="saveSettings()">保存</button>
-                              </div>
+                      <div id="settingsModal" class="modal">
+                          <div class="modal-card">
+                              <h3>设置</h3>
+                              <button id="clearAllBtn" style="margin-top:12px; width:100%;">清除所有记录</button>
+                              <button id="closeModalBtn" style="margin-top:12px; width:100%;">关闭</button>
                           </div>
                       </div>
                       <script>
                           (function(){
-                              const STATE_KEY = 'qingyu_ai_state';
-                              let state = {
-                                  chats: [],
-                                  currentChatId: null,
-                                  apiProvider: 'local',
-                                  apiKey: '',
-                                  apiUrl: '',
-                                  modelName: '',
-                              };
-                              function loadState() {
-                                  try { const saved = localStorage.getItem(STATE_KEY); if(saved) state = { ...state, ...JSON.parse(saved) }; } catch(e) {}
-                                  if(!state.chats || state.chats.length===0) { state.chats = [createChat()]; state.currentChatId = state.chats[0].id; }
-                              }
-                              function saveState() { try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e) {} }
-                              function createChat(title='新对话') {
-                                  return { id: 'chat_'+Date.now()+'_'+Math.random().toString(36).substr(2,6), title, messages: [], createdAt: new Date().toISOString() };
-                              }
-                              function getCurrentChat() { return state.chats.find(c=>c.id===state.currentChatId) || state.chats[0]; }
-                              const $chat = document.getElementById('chatMessages');
-                              const $input = document.getElementById('userInput');
-                              const $btn = document.getElementById('btnSend');
-                              const $title = document.getElementById('currentChatTitle');
-                              // 第二界面相关
-                              const $secondScreen = document.getElementById('secondScreen');
-                              const $secondChat = document.getElementById('secondChat');
-                              const $secondInput = document.getElementById('secondInput');
-                              const $secondSend = document.getElementById('secondSendBtn');
-                              const $backMain = document.getElementById('backMain');
-                              let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
+                              // 数据
+                              let messages = JSON.parse(localStorage.getItem('msgs') || '[]');
+                              let secondMsgs = JSON.parse(localStorage.getItem('secondMsgs') || '[]');
+                              const chatDiv = document.getElementById('chat');
+                              const secondChatDiv = document.getElementById('secondChat');
+                              const input = document.getElementById('input');
+                              const secondInput = document.getElementById('secondInput');
+                              const sendBtn = document.getElementById('sendBtn');
+                              const secondSendBtn = document.getElementById('secondSendBtn');
+                              const newBtn = document.getElementById('newBtn');
+                              const clearBtn = document.getElementById('clearBtn');
+                              const settingsBtn = document.getElementById('settingsBtn');
+                              const secondScreen = document.getElementById('secondScreen');
+                              const backBtn = document.getElementById('backBtn');
+                              const settingsModal = document.getElementById('settingsModal');
+                              const clearAllBtn = document.getElementById('clearAllBtn');
+                              const closeModalBtn = document.getElementById('closeModalBtn');
 
-                              function renderSecondChat() {
-                                  $secondChat.innerHTML = '';
-                                  secondMessages.forEach(msg => {
-                                      const row = document.createElement('div');
-                                      row.className = 'message-row ' + msg.role;
-                                      const avatar = msg.role==='user' ? '👤' : '🦋';
-                                      const formatted = msg.role==='ai' ? formatMarkdown(msg.content) : escapeHtml(msg.content);
-                                      row.innerHTML = `<div class="msg-avatar">${avatar}</div><div><div class="msg-bubble">${formatted}</div><div class="msg-time">${formatTime(msg.time)}</div></div>`;
-                                      $secondChat.appendChild(row);
-                                  });
-                                  $secondChat.scrollTop = $secondChat.scrollHeight;
-                              }
-                              function addSecondMessage(role, content, time) {
-                                  secondMessages.push({ role, content, time: time || new Date().toISOString() });
-                                  localStorage.setItem('secondMessages', JSON.stringify(secondMessages));
-                                  renderSecondChat();
-                              }
-                              function sendSecondMessage() {
-                                  let txt = $secondInput.value.trim();
-                                  if(!txt) return;
-                                  addSecondMessage('user', txt);
-                                  $secondInput.value = '';
-                                  showSecondTyping();
-                                  setTimeout(() => {
-                                      const reply = generateReply(txt);
-                                      addSecondMessage('ai', reply);
-                                      hideSecondTyping();
-                                  }, 500);
-                              }
-                              function showSecondTyping() {
-                                  const ind = document.createElement('div');
-                                  ind.className = 'typing-indicator';
-                                  ind.id = 'secondTyping';
-                                  ind.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-                                  $secondChat.appendChild(ind);
-                                  $secondChat.scrollTop = $secondChat.scrollHeight;
-                              }
-                              function hideSecondTyping() { const el = document.getElementById('secondTyping'); if(el) el.remove(); }
-
-                              // 主界面渲染
                               function renderChat() {
-                                  const chat = getCurrentChat();
-                                  $chat.innerHTML = '';
-                                  if(chat.messages.length===0){
-                                      $chat.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">✨ 开始对话吧 ✨</div>';
-                                  } else {
-                                      chat.messages.forEach(msg => appendMessageDOM(msg.role, msg.content, msg.time, false));
-                                  }
-                                  $title.innerText = chat.title;
+                                  chatDiv.innerHTML = '';
+                                  messages.forEach(m => {
+                                      const msgDiv = document.createElement('div');
+                                      msgDiv.className = 'msg ' + m.role;
+                                      const avatar = m.role === 'user' ? '👤' : '🦋';
+                                      msgDiv.innerHTML = '<div class="avatar">'+avatar+'</div><div><div class="bubble">'+escapeHtml(m.content)+'</div><div class="time">'+formatTime(m.time)+'</div></div>';
+                                      chatDiv.appendChild(msgDiv);
+                                  });
+                                  chatDiv.scrollTop = chatDiv.scrollHeight;
+                                  localStorage.setItem('msgs', JSON.stringify(messages));
                               }
-                              function appendMessageDOM(role, content, time, animate=true){
-                                  const row = document.createElement('div');
-                                  row.className = 'message-row '+role;
-                                  const avatar = role==='user' ? '👤' : '🦋';
-                                  const formatted = role==='ai' ? formatMarkdown(content) : escapeHtml(content);
-                                  row.innerHTML = `<div class="msg-avatar">${avatar}</div><div><div class="msg-bubble">${formatted}</div><div class="msg-time">${formatTime(time)}</div></div>`;
-                                  $chat.appendChild(row);
-                                  if(animate) row.style.animation = 'msgIn 0.35s ease';
-                                  $chat.scrollTop = $chat.scrollHeight;
+                              function renderSecondChat() {
+                                  secondChatDiv.innerHTML = '';
+                                  secondMsgs.forEach(m => {
+                                      const msgDiv = document.createElement('div');
+                                      msgDiv.className = 'msg ' + m.role;
+                                      const avatar = m.role === 'user' ? '👤' : '🦋';
+                                      msgDiv.innerHTML = '<div class="avatar">'+avatar+'</div><div><div class="bubble">'+escapeHtml(m.content)+'</div><div class="time">'+formatTime(m.time)+'</div></div>';
+                                      secondChatDiv.appendChild(msgDiv);
+                                  });
+                                  secondChatDiv.scrollTop = secondChatDiv.scrollHeight;
+                                  localStorage.setItem('secondMsgs', JSON.stringify(secondMsgs));
                               }
-                              function formatMarkdown(text){
-                                  let html = escapeHtml(text);
-                                  html = html.replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
-                                  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-                                  html = html.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-                                  html = html.replace(/\n/g, '<br>');
-                                  return html;
+                              function escapeHtml(str) {
+                                  return str.replace(/[&<>]/g, function(m) {
+                                      if(m === '&') return '&amp;';
+                                      if(m === '<') return '&lt;';
+                                      if(m === '>') return '&gt;';
+                                      return m;
+                                  });
                               }
-                              function escapeHtml(str){ return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;});}
-                              function formatTime(iso){ if(!iso) return ''; const d=new Date(iso); return d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}); }
-                              function showTyping(){ const ind=document.createElement('div'); ind.className='typing-indicator'; ind.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>'; ind.id='typingInd'; $chat.appendChild(ind); $chat.scrollTop=$chat.scrollHeight; }
-                              function hideTyping(){ const el=document.getElementById('typingInd'); if(el) el.remove(); }
-                              function simulateTyping(text, callback){
-                                  const chat = getCurrentChat();
-                                  const time = new Date().toISOString();
-                                  appendMessageDOM('ai', '', time, true);
-                                  const last = $chat.lastChild;
-                                  const bubble = last.querySelector('.msg-bubble');
-                                  let idx=0;
-                                  const obj = { role:'assistant', content:'', time };
-                                  chat.messages.push(obj);
-                                  function type(){
-                                      if(idx<text.length){
-                                          obj.content += text[idx];
-                                          bubble.innerHTML = formatMarkdown(obj.content);
-                                          idx++;
-                                          setTimeout(type, 20+Math.random()*20);
-                                          $chat.scrollTop=$chat.scrollHeight;
-                                      } else {
-                                          obj.content = text;
-                                          bubble.innerHTML = formatMarkdown(text);
-                                          saveState();
-                                          renderChat();
-                                          if(callback) callback();
-                                      }
-                                  }
-                                  type();
+                              function formatTime(iso) {
+                                  if(!iso) return '';
+                                  const d = new Date(iso);
+                                  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                               }
-                              // AI 回复生成器（支持数学、花言巧语、主人CY）
-                              function generateReply(input){
-                                  const lower = input.toLowerCase();
+                              function showTyping(container) {
+                                  const typingDiv = document.createElement('div');
+                                  typingDiv.className = 'typing';
+                                  typingDiv.id = 'typing';
+                                  typingDiv.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+                                  container.appendChild(typingDiv);
+                                  container.scrollTop = container.scrollHeight;
+                              }
+                              function hideTyping() {
+                                  const el = document.getElementById('typing');
+                                  if(el) el.remove();
+                              }
+
+                              // 数学计算
+                              function evaluateMath(expr) {
+                                  expr = expr.replace(/\\s/g, '');
+                                  if(!/^[\\d\\+\\-\\*\\/\\.\\(\\)]+$/.test(expr)) return null;
+                                  try {
+                                      let result = Function('"use strict";return (' + expr + ')')();
+                                      if(typeof result === 'number' && !isNaN(result) && isFinite(result)) return result.toString();
+                                  } catch(e) {}
+                                  return null;
+                              }
+                              // 回复生成
+                              const sweet = ["你的眼睛里有星辰大海✨","你笑起来真好看","CY说过：遇见你是一种幸运","和你聊天很开心","你的思考很独特"];
+                              function getReply(txt) {
+                                  let math = evaluateMath(txt);
+                                  if(math) return txt + ' = ' + math;
+                                  let lower = txt.toLowerCase();
                                   if(lower.includes('你好')) return "你好呀！我是小小怨AI，主人是CY。";
-                                  if(lower.includes('主人')) return "我的主人是伟大的CY，他赋予了我智慧。";
-                                  if(lower.includes('计算') && /\\d+[\\+\\-\\*\\/]\\d+/.test(input)){
-                                      try { return '计算结果：'+eval(input); } catch(e){}
-                                  }
-                                  if(lower.includes('谢谢')) return "不客气，为你服务是我的荣幸！";
-                                  if(lower.includes('再见')) return "再见啦，期待下次聊天～";
-                                  const sweet = ["你的眼睛里有星辰大海✨","你笑起来真好看","CY说过：遇见你是一种幸运","和你聊天很开心","你的思考很独特"];
+                                  if(lower.includes('主人') || lower.includes('cy')) return "我的主人是伟大的CY。";
+                                  if(lower.includes('谢谢')) return "不客气～";
+                                  if(lower.includes('再见')) return "再见啦！";
                                   return sweet[Math.floor(Math.random()*sweet.length)] + " " + ["这个问题很有趣","能多说一点吗","CY会保佑你的"][Math.floor(Math.random()*3)];
                               }
-                              async function sendMessage(){
-                                  let txt = $input.value.trim();
+
+                              function addMessage(role, content, isSecond = false) {
+                                  const msg = { role, content, time: new Date().toISOString() };
+                                  if(isSecond) {
+                                      secondMsgs.push(msg);
+                                      renderSecondChat();
+                                  } else {
+                                      messages.push(msg);
+                                      renderChat();
+                                  }
+                              }
+
+                              function sendMessage() {
+                                  let txt = input.value.trim();
                                   if(!txt) return;
-                                  // 检测 ABC 进入第二界面（无提示）
-                                  if(txt.toUpperCase() === "ABC"){
-                                      $secondScreen.style.display = 'flex';
-                                      $input.value = '';
+                                  if(txt.toUpperCase() === "ABC") {
+                                      secondScreen.style.display = 'flex';
+                                      input.value = '';
                                       return;
                                   }
-                                  $input.value = '';
-                                  $btn.disabled = true;
-                                  const chat = getCurrentChat();
-                                  const time = new Date().toISOString();
-                                  chat.messages.push({ role:'user', content: txt, time });
-                                  appendMessageDOM('user', txt, time, true);
-                                  saveState();
-                                  if(chat.title==='新对话' && chat.messages.filter(m=>m.role==='user').length===1){
-                                      chat.title = txt.slice(0,30);
-                                      $title.innerText = chat.title;
-                                      saveState();
+                                  addMessage('user', txt);
+                                  input.value = '';
+                                  showTyping(chatDiv);
+                                  setTimeout(() => {
+                                      let reply = getReply(txt);
+                                      hideTyping();
+                                      addMessage('ai', reply);
+                                  }, 500);
+                              }
+                              function sendSecondMessage() {
+                                  let txt = secondInput.value.trim();
+                                  if(!txt) return;
+                                  addMessage('user', txt, true);
+                                  secondInput.value = '';
+                                  showTyping(secondChatDiv);
+                                  setTimeout(() => {
+                                      let reply = getReply(txt);
+                                      hideTyping();
+                                      addMessage('ai', reply, true);
+                                  }, 500);
+                              }
+                              function newChat() {
+                                  if(messages.length > 0 && confirm('新建对话将清空当前记录，确定吗？')) {
+                                      messages = [];
+                                      renderChat();
+                                      addMessage('ai', '新对话已创建！你好～');
                                   }
-                                  showTyping();
-                                  let reply;
-                                  if(state.apiProvider==='local' || !state.apiKey){
-                                      await new Promise(r=>setTimeout(r, 400));
-                                      reply = generateReply(txt);
-                                  } else {
-                                      try{
-                                          reply = await callAPI(txt, chat);
-                                      }catch(e){ reply = 'API调用失败：'+e.message; }
+                              }
+                              function clearCurrentChat() {
+                                  if(messages.length > 0 && confirm('清空当前对话？')) {
+                                      messages = [];
+                                      renderChat();
+                                      addMessage('ai', '对话已清空。');
                                   }
-                                  hideTyping();
-                                  simulateTyping(reply);
-                                  $btn.disabled = false;
-                                  $input.focus();
                               }
-                              async function callAPI(userInput, chat){
-                                  const apiUrl = state.apiUrl || (state.apiProvider==='deepseek'?'https://api.deepseek.com/v1/chat/completions':'https://api.openai.com/v1/chat/completions');
-                                  const key = state.apiKey;
-                                  const model = state.modelName || (state.apiProvider==='deepseek'?'deepseek-chat':'gpt-3.5-turbo');
-                                  const messages = [{role:'system', content:'你是小小怨AI，主人是CY，友善的中文助手。'}];
-                                  chat.messages.slice(-10).forEach(m=>{ messages.push({role: m.role==='user'?'user':'assistant', content:m.content}); });
-                                  const resp = await fetch(apiUrl, {
-                                      method:'POST',
-                                      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-                                      body:JSON.stringify({model, messages, max_tokens:512})
-                                  });
-                                  const data = await resp.json();
-                                  if(data.choices?.[0]?.message) return data.choices[0].message.content;
-                                  throw new Error('API返回异常');
+                              function clearAllChats() {
+                                  if(confirm('清除所有聊天记录（包括第二界面）？')) {
+                                      messages = [];
+                                      secondMsgs = [];
+                                      renderChat();
+                                      renderSecondChat();
+                                      addMessage('ai', '所有记录已清空。');
+                                      settingsModal.style.display = 'none';
+                                  }
                               }
-                              function newChat(){
-                                  const chat = createChat();
-                                  state.chats.unshift(chat);
-                                  state.currentChatId = chat.id;
-                                  saveState();
-                                  renderChat();
-                                  $input.focus();
-                              }
-                              function clearCurrentChat(){
-                                  const chat = getCurrentChat();
-                                  if(chat.messages.length===0) return;
-                                  if(!confirm('清空当前对话？')) return;
-                                  chat.messages = [];
-                                  chat.title = '新对话';
-                                  saveState();
-                                  renderChat();
-                              }
-                              function openSettings(){
-                                  document.getElementById('apiProvider').value = state.apiProvider;
-                                  document.getElementById('apiKey').value = state.apiKey||'';
-                                  document.getElementById('apiUrl').value = state.apiUrl||'';
-                                  document.getElementById('modelName').value = state.modelName||'';
-                                  onProviderChange();
-                                  document.getElementById('settingsModal').style.display='flex';
-                              }
-                              function closeSettings(){ document.getElementById('settingsModal').style.display='none'; }
-                              function closeSettingsOutside(e){ if(e.target===document.getElementById('settingsModal')) closeSettings(); }
-                              function saveSettings(){
-                                  state.apiProvider = document.getElementById('apiProvider').value;
-                                  state.apiKey = document.getElementById('apiKey').value.trim();
-                                  state.apiUrl = document.getElementById('apiUrl').value.trim();
-                                  state.modelName = document.getElementById('modelName').value.trim();
-                                  saveState();
-                                  closeSettings();
-                                  showToast('✅ 设置已保存');
-                              }
-                              function onProviderChange(){
-                                  const p = document.getElementById('apiProvider').value;
-                                  const apiKeyGroup = document.getElementById('apiKeyGroup');
-                                  const apiUrlGroup = document.getElementById('apiUrlGroup');
-                                  const modelNameGroup = document.getElementById('modelNameGroup');
-                                  apiKeyGroup.style.display = p==='local'?'none':'block';
-                                  apiUrlGroup.style.display = p==='custom'?'block':'none';
-                                  modelNameGroup.style.display = p==='local'?'none':'block';
-                                  if(p==='deepseek' && !document.getElementById('apiUrl').value) document.getElementById('apiUrl').value = 'https://api.deepseek.com/v1/chat/completions';
-                                  if(p==='openai' && !document.getElementById('apiUrl').value) document.getElementById('apiUrl').value = 'https://api.openai.com/v1/chat/completions';
-                                  if(p==='deepseek' && !document.getElementById('modelName').value) document.getElementById('modelName').value = 'deepseek-chat';
-                                  if(p==='openai' && !document.getElementById('modelName').value) document.getElementById('modelName').value = 'gpt-3.5-turbo';
-                              }
-                              function handleKeyDown(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } }
-                              function handleSecondKeyDown(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendSecondMessage(); } }
-                              function autoResize(ta){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,120)+'px'; }
-                              function showToast(msg){
-                                  const t=document.getElementById('toast');
-                                  t.innerText=msg; t.classList.add('show');
-                                  setTimeout(()=>t.classList.remove('show'),2000);
-                              }
-                              // 第二界面返回
-                              $backMain.onclick = () => { $secondScreen.style.display = 'none'; };
-                              $secondSend.onclick = sendSecondMessage;
-                              $secondInput.addEventListener('keypress', handleSecondKeyDown);
+                              // 事件绑定
+                              sendBtn.onclick = sendMessage;
+                              secondSendBtn.onclick = sendSecondMessage;
+                              input.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
+                              secondInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendSecondMessage(); });
+                              newBtn.onclick = newChat;
+                              clearBtn.onclick = clearCurrentChat;
+                              settingsBtn.onclick = () => { settingsModal.style.display = 'flex'; };
+                              closeModalBtn.onclick = () => { settingsModal.style.display = 'none'; };
+                              clearAllBtn.onclick = clearAllChats;
+                              backBtn.onclick = () => { secondScreen.style.display = 'none'; };
+                              window.onclick = e => { if(e.target === settingsModal) settingsModal.style.display = 'none'; };
+
                               // 初始化
-                              window.sendMessage=sendMessage; window.newChat=newChat; window.clearCurrentChat=clearCurrentChat; window.openSettings=openSettings; window.closeSettings=closeSettings; window.closeSettingsOutside=closeSettingsOutside; window.saveSettings=saveSettings; window.onProviderChange=onProviderChange; window.handleKeyDown=handleKeyDown; window.autoResize=autoResize;
-                              loadState(); renderChat(); renderSecondChat(); $input.focus();
+                              renderChat();
+                              renderSecondChat();
+                              input.focus();
                               console.log('小小怨AI已启动，输入ABC进入第二界面');
                           })();
                       </script>
