@@ -35,83 +35,268 @@ jobs:
                   let config = WKWebViewConfiguration()
                   let webView = WKWebView(frame: view.bounds, configuration: config)
                   webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-                  webView.scrollView.keyboardDismissMode = .none
                   webView.scrollView.delaysContentTouches = false
+                  webView.scrollView.canCancelContentTouches = true
+                  webView.scrollView.keyboardDismissMode = .none
                   view.addSubview(webView)
 
                   let html = """
                   <!DOCTYPE html>
                   <html>
                   <head>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+                      <meta charset="UTF-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+                      <title>小小怨AI</title>
                       <style>
+                          * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
                           body {
-                              margin:0; padding:20px; font-family:system-ui; background:#f0fdfa; display:flex; flex-direction:column; height:100vh;
+                              font-family:system-ui;
+                              background:#f0fdfa;
+                              height:100vh;
+                              display:flex;
+                              flex-direction:column;
+                              overflow:hidden;
                           }
-                          #chat {
-                              flex:1; overflow-y:auto; border:1px solid #ccc; padding:10px; margin-bottom:10px; background:white;
+                          /* 3D扫描启动动画 */
+                          .splash {
+                              position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:2000;
+                              display:flex; justify-content:center; align-items:center; animation: fadeOut 2s forwards;
                           }
-                          .msg {
-                              margin:8px 0; padding:8px 12px; border-radius:20px; max-width:80%;
+                          .scan-circle {
+                              width:200px; height:200px; border-radius:50%; border:4px solid #4cd964; box-shadow:0 0 20px #4cd964; position:relative;
                           }
-                          .user { background:#0d9488; color:white; align-self:flex-end; margin-left:auto; }
-                          .ai { background:#e2e8f0; color:black; }
-                          .input-area { display:flex; gap:10px; }
-                          input { flex:1; padding:12px; border:1px solid #ccc; border-radius:30px; font-size:16px; }
-                          button { background:#0d9488; border:none; border-radius:30px; padding:12px 20px; color:white; font-size:16px; cursor:pointer; }
+                          .scan-line {
+                              position:absolute; top:0; left:0; width:100%; height:2px; background:#4cd964; animation: scan 1.5s infinite;
+                          }
+                          @keyframes scan { 0%{top:0;} 100%{top:100%;} }
+                          @keyframes fadeOut { 0%{opacity:1;} 100%{opacity:0;visibility:hidden;} }
+                          /* 侧边栏 */
+                          .sidebar {
+                              position:fixed; left:0; top:0; width:280px; height:100%; background:#0f766e; transform:translateX(-100%);
+                              transition:0.3s; z-index:100; padding:20px 16px; color:white; display:flex; flex-direction:column; gap:16px;
+                          }
+                          .sidebar.open { transform:translateX(0); }
+                          .sidebar h3 { font-size:18px; margin-bottom:4px; }
+                          .sidebar button {
+                              background:rgba(255,255,255,0.2); border:none; border-radius:30px; padding:12px;
+                              color:white; font-size:16px; cursor:pointer; width:100%; text-align:center;
+                          }
+                          /* 主界面 */
+                          .main {
+                              width:100%; height:100%; display:flex; flex-direction:column; background:#f0fdfa;
+                          }
+                          .top {
+                              background:white; padding:12px 16px; border-bottom:1px solid #ccfbf1;
+                              display:flex; justify-content:space-between; align-items:center; flex-shrink:0;
+                          }
+                          .title { font-size:18px; font-weight:600; color:#0f766e; }
+                          .icon-btn { font-size:24px; background:none; border:none; width:40px; cursor:pointer; border-radius:20px; }
+                          /* 聊天区域 */
+                          .chat {
+                              flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px;
+                              -webkit-overflow-scrolling:touch;
+                          }
+                          .message {
+                              max-width:80%; padding:10px 14px; border-radius:20px; font-size:15px; line-height:1.4; word-break:break-word;
+                          }
+                          .user { align-self:flex-end; background:#0d9488; color:white; border-bottom-right-radius:4px; }
+                          .ai { align-self:flex-start; background:white; border:1px solid #ccfbf1; border-bottom-left-radius:4px; }
+                          /* 输入区 */
+                          .input-bar {
+                              display:flex; padding:12px 16px; background:white; border-top:1px solid #eee; gap:10px; flex-shrink:0;
+                          }
+                          input {
+                              flex:1; border:1px solid #99f6e4; border-radius:30px; padding:10px 16px; font-size:16px; outline:none; background:white;
+                          }
+                          input:focus { border-color:#0d9488; }
+                          button {
+                              background:#0d9488; border:none; border-radius:30px; width:48px; color:white; font-size:18px; cursor:pointer;
+                          }
+                          /* 第二界面 */
+                          .second {
+                              position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:none; flex-direction:column; z-index:200;
+                          }
+                          .second .header { background:#0f766e; color:white; padding:12px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+                          .back { background:white; border:none; border-radius:20px; padding:4px 12px; cursor:pointer; }
+                          /* 设置弹窗 */
+                          .modal {
+                              position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:300;
+                          }
+                          .modal-card { background:white; border-radius:24px; padding:20px; width:260px; text-align:center; }
+                          .modal-card button { margin-top:12px; background:#e2e8f0; color:black; width:100%; }
                       </style>
                   </head>
                   <body>
-                      <div id="chat"></div>
-                      <div class="input-area">
-                          <input id="msgInput" placeholder="输入消息..." autofocus>
-                          <button id="sendBtn" onclick="sendMessage()">发送</button>
+                      <!-- 3D扫描启动动画 -->
+                      <div id="splash" class="splash"><div class="scan-circle"><div class="scan-line"></div></div></div>
+
+                      <!-- 侧边栏 -->
+                      <div id="sidebar" class="sidebar">
+                          <h3>小小怨AI</h3>
+                          <button id="newBtn">✨ 新建对话</button>
+                          <button id="clearBtn">🗑️ 清空当前</button>
+                          <button id="exportBtn">📥 导出对话</button>
+                          <button id="closeSidebar">✕ 关闭菜单</button>
                       </div>
+
+                      <!-- 第二界面 -->
+                      <div id="second" class="second">
+                          <div class="header"><span>第二界面</span><button class="back" id="backMain">返回</button></div>
+                          <div id="secondChat" class="chat"></div>
+                          <div class="input-bar"><input id="secondInput" placeholder="输入消息..."><button id="secondSend">➤</button></div>
+                      </div>
+
+                      <!-- 设置弹窗 -->
+                      <div id="settingsModal" class="modal">
+                          <div class="modal-card"><h3>设置</h3><button id="clearAllBtn">清除所有记录</button><button id="closeModal">关闭</button></div>
+                      </div>
+
+                      <!-- 主聊天界面 -->
+                      <div class="main">
+                          <div class="top">
+                              <button class="icon-btn" id="menuBtn">☰</button>
+                              <span class="title">小小怨AI</span>
+                              <button class="icon-btn" id="settingsBtn">⚙️</button>
+                          </div>
+                          <div id="mainChat" class="chat">
+                              <div class="message ai">你好！我是小小怨AI，主人是CY。左滑打开菜单，输入ABC进入第二界面。</div>
+                          </div>
+                          <div class="input-bar">
+                              <input id="mainInput" placeholder="输入消息...">
+                              <button id="mainSend">➤</button>
+                          </div>
+                      </div>
+
                       <script>
-                          let messages = [];
-                          const chatDiv = document.getElementById('chat');
-                          const input = document.getElementById('msgInput');
+                          (function(){
+                              // 启动动画2秒后移除
+                              setTimeout(()=>{ let s=document.getElementById('splash'); if(s) s.remove(); },2000);
 
-                          function render() {
-                              chatDiv.innerHTML = '';
-                              messages.forEach(m => {
-                                  const div = document.createElement('div');
-                                  div.className = 'msg ' + m.role;
-                                  div.innerText = m.content;
-                                  chatDiv.appendChild(div);
-                              });
-                              chatDiv.scrollTop = chatDiv.scrollHeight;
-                          }
+                              // 侧边栏滑动
+                              const sidebar = document.getElementById('sidebar');
+                              const menuBtn = document.getElementById('menuBtn');
+                              const closeSidebar = document.getElementById('closeSidebar');
+                              let isOpen = false;
+                              function open(){ sidebar.classList.add('open'); isOpen=true; }
+                              function close(){ sidebar.classList.remove('open'); isOpen=false; }
+                              menuBtn.onclick = () => isOpen ? close() : open();
+                              closeSidebar.onclick = close;
+                              let startX=0;
+                              document.body.addEventListener('touchstart',e=>{ startX=e.touches[0].clientX; },{passive:false});
+                              document.body.addEventListener('touchmove',e=>{
+                                  let delta=e.touches[0].clientX-startX;
+                                  if(startX<30 && delta>20 && !isOpen){ open(); e.preventDefault(); }
+                                  if(delta<-20 && isOpen){ close(); e.preventDefault(); }
+                              },{passive:false});
+                              document.addEventListener('click',e=>{ if(isOpen && !sidebar.contains(e.target) && e.target!==menuBtn) close(); });
 
-                          function aiReply(text) {
-                              const lower = text.toLowerCase();
-                              if (lower.includes('你好')) return '你好呀！我是小小怨AI。';
-                              if (lower.includes('计算') && /\\d+[\\+\\-\\*\\/]\\d+/.test(text)) {
-                                  try { return '计算结果：' + eval(text); } catch(e) {}
+                              // 数据存储
+                              let mainMsgs = JSON.parse(localStorage.getItem('mainMsgs')||'[]');
+                              let secondMsgs = JSON.parse(localStorage.getItem('secondMsgs')||'[]');
+                              const mainChat = document.getElementById('mainChat');
+                              const secondChat = document.getElementById('secondChat');
+                              const mainInput = document.getElementById('mainInput');
+                              const secondInput = document.getElementById('secondInput');
+                              const mainSend = document.getElementById('mainSend');
+                              const secondSend = document.getElementById('secondSend');
+
+                              function renderMain(){
+                                  mainChat.innerHTML = '';
+                                  mainMsgs.forEach(m=>{
+                                      let div = document.createElement('div');
+                                      div.className = 'message ' + m.role;
+                                      div.textContent = m.content;
+                                      mainChat.appendChild(div);
+                                  });
+                                  mainChat.scrollTop = mainChat.scrollHeight;
+                                  localStorage.setItem('mainMsgs',JSON.stringify(mainMsgs));
                               }
-                              return '收到：' + text + '（测试回复）';
-                          }
+                              function renderSecond(){
+                                  secondChat.innerHTML = '';
+                                  secondMsgs.forEach(m=>{
+                                      let div = document.createElement('div');
+                                      div.className = 'message ' + m.role;
+                                      div.textContent = m.content;
+                                      secondChat.appendChild(div);
+                                  });
+                                  secondChat.scrollTop = secondChat.scrollHeight;
+                                  localStorage.setItem('secondMsgs',JSON.stringify(secondMsgs));
+                              }
 
-                          window.sendMessage = function() {
-                              let text = input.value.trim();
-                              if (!text) return;
-                              messages.push({ role: 'user', content: text });
-                              render();
-                              input.value = '';
-                              setTimeout(() => {
-                                  let reply = aiReply(text);
-                                  messages.push({ role: 'ai', content: reply });
-                                  render();
-                              }, 300);
-                          }
+                              // 计算器
+                              function evalMath(expr){
+                                  expr = expr.replace(/\\s/g,'');
+                                  if(!/^[\\d\\+\\-\\*\\/\\.\\(\\)]+$/.test(expr)) return null;
+                                  try { return Function('"use strict";return ('+expr+')')().toString(); } catch(e){ return null; }
+                              }
+                              const sweet = ["你的眼睛里有星辰大海✨","你笑起来真好看","CY说过：遇见你是一种幸运","和你聊天很开心","你的思考很独特"];
+                              function getReply(txt){
+                                  let math = evalMath(txt);
+                                  if(math) return txt+' = '+math;
+                                  let lower = txt.toLowerCase();
+                                  if(lower.includes('你好')) return "你好呀！我是小小怨AI，主人是CY。";
+                                  if(lower.includes('主人')) return "我的主人是伟大的CY。";
+                                  if(lower.includes('谢谢')) return "不客气～";
+                                  if(lower.includes('再见')) return "再见啦！";
+                                  return sweet[Math.floor(Math.random()*sweet.length)] + " " + (["这个问题很有趣","能多说一点吗","CY会保佑你的"][Math.floor(Math.random()*3)]);
+                              }
 
-                          input.addEventListener('keypress', function(e) {
-                              if (e.key === 'Enter') sendMessage();
-                          });
+                              function addMain(role,content){ mainMsgs.push({role,content}); renderMain(); }
+                              function addSecond(role,content){ secondMsgs.push({role,content}); renderSecond(); }
 
-                          // 初始欢迎语
-                          messages.push({ role: 'ai', content: '你好！我是小小怨AI，主人是CY。输入消息测试聊天。' });
-                          render();
+                              // 主界面发送消息（和基础版完全一致）
+                              function sendMain(){
+                                  let t = mainInput.value.trim();
+                                  if(!t) return;
+                                  if(t === "ABC"){ document.getElementById('second').style.display='flex'; mainInput.value=''; return; }
+                                  addMain('user',t);
+                                  mainInput.value = '';
+                                  setTimeout(()=> addMain('ai', getReply(t)), 300);
+                              }
+                              function sendSecond(){
+                                  let t = secondInput.value.trim();
+                                  if(!t) return;
+                                  addSecond('user',t);
+                                  secondInput.value = '';
+                                  setTimeout(()=> addSecond('ai', getReply(t)), 300);
+                              }
+
+                              // 绑定事件
+                              mainSend.onclick = sendMain;
+                              secondSend.onclick = sendSecond;
+                              mainInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendMain(); });
+                              secondInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendSecond(); });
+
+                              // 侧边栏按钮
+                              document.getElementById('newBtn').onclick = ()=>{
+                                  if(mainMsgs.length>0 && confirm('新建会清空当前对话')){ mainMsgs=[]; renderMain(); addMain('ai','新对话已创建'); }
+                                  close();
+                              };
+                              document.getElementById('clearBtn').onclick = ()=>{
+                                  if(mainMsgs.length>0 && confirm('清空当前对话？')){ mainMsgs=[]; renderMain(); addMain('ai','对话已清空'); }
+                                  close();
+                              };
+                              document.getElementById('exportBtn').onclick = ()=>{
+                                  if(mainMsgs.length===0){ alert('无内容可导出'); return; }
+                                  let text = "小小怨AI对话\\n"+new Date().toLocaleString()+"\\n";
+                                  mainMsgs.forEach(m=>{ text += (m.role==='user'?'我：':'AI：')+m.content+'\\n'; });
+                                  let a=document.createElement('a');
+                                  a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+                                  a.download='chat.txt';
+                                  a.click();
+                                  close();
+                              };
+                              const settingsModal = document.getElementById('settingsModal');
+                              document.getElementById('settingsBtn').onclick = ()=>{ settingsModal.style.display='flex'; close(); };
+                              document.getElementById('closeModal').onclick = ()=>{ settingsModal.style.display='none'; };
+                              document.getElementById('clearAllBtn').onclick = ()=>{
+                                  if(confirm('清除所有记录（主界面和第二界面）？')){ mainMsgs=[]; secondMsgs=[]; renderMain(); renderSecond(); addMain('ai','所有记录已清空'); settingsModal.style.display='none'; }
+                              };
+                              window.onclick = e=>{ if(e.target===settingsModal) settingsModal.style.display='none'; };
+                              document.getElementById('backMain').onclick = ()=>{ document.getElementById('second').style.display='none'; };
+
+                              renderMain(); renderSecond();
+                          })();
                       </script>
                   </body>
                   </html>
@@ -129,7 +314,7 @@ jobs:
               <key>CFBundleExecutable</key>
               <string>App</string>
               <key>CFBundleIdentifier</key>
-              <string>com.test.chat</string>
+              <string>com.xiaoxiaoyuan.ai</string>
               <key>CFBundleName</key>
               <string>小小怨AI</string>
               <key>CFBundlePackageType</key>
@@ -143,23 +328,59 @@ jobs:
               <key>UISupportedInterfaceOrientations</key>
               <array>
                   <string>UIInterfaceOrientationPortrait</string>
+                  <string>UIInterfaceOrientationLandscapeLeft</string>
+                  <string>UIInterfaceOrientationLandscapeRight</string>
               </array>
           </dict>
           </plist>
           EOF
 
           mkdir -p Base.lproj
-          echo '<document/>' > Base.lproj/LaunchScreen.storyboard
+          cat > Base.lproj/LaunchScreen.storyboard << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+              <dependencies>
+                  <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21679"/>
+              </dependencies>
+              <scenes>
+                  <scene sceneID="EHf-IW-A2E">
+                      <objects>
+                          <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                              <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                                  <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                  <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                  <subviews>
+                                      <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="小小怨 AI" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
+                                          <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                          <fontDescription key="fontDescription" type="boldSystem" pointSize="30"/>
+                                          <color key="textColor" red="0.05" green="0.52" blue="0.53" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                          <nil key="highlightedColor"/>
+                                      </label>
+                                  </subviews>
+                                  <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                                  <constraints>
+                                      <constraint firstItem="GJd-Yh-RWb" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="7yF-2U-9Jw"/>
+                                      <constraint firstItem="GJd-Yh-RWb" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="TcB-0d-MaD"/>
+                                  </constraints>
+                              </view>
+                          </viewController>
+                          <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                      </objects>
+                      <point key="canvasLocation" x="53" y="375"/>
+                  </scene>
+              </scenes>
+          </document>
+          EOF
 
           cd ..
           mkdir -p Payload/App.app
           swiftc App/main.swift -o Payload/App.app/App -parse-as-library -target arm64-apple-ios13.0 -sdk $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework WebKit
           cp App/Info.plist Payload/App.app/
           cp -r App/Base.lproj Payload/App.app/
-          zip -r ChatTest.ipa Payload
+          zip -r XiaoxiaoYuanAI.ipa Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ChatTest-IPA
-          path: ChatTest.ipa
+          name: XiaoxiaoYuanAI-IPA
+          path: XiaoxiaoYuanAI.ipa
