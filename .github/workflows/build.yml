@@ -45,10 +45,11 @@ jobs:
                   <head>
                       <meta charset="UTF-8">
                       <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-                      <title>青语AI</title>
+                      <title>小小怨AI</title>
                       <style>
                           * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
                           body { font-family: system-ui; background: #f0fdfa; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+                          /* 主界面 */
                           .main-area { flex: 1; display: flex; flex-direction: column; background: #e8faf6; }
                           .top-bar { background: white; padding: 12px 16px; border-bottom: 1px solid #ccfbf1; display: flex; justify-content: space-between; align-items: center; }
                           .current-chat-title { font-weight: 600; font-size: 0.95rem; color: #1e293b; }
@@ -69,23 +70,39 @@ jobs:
                           .input-area { padding: 12px 16px 16px; background: white; border-top: 1px solid #ccfbf1; }
                           .input-wrapper { display: flex; gap: 10px; align-items: flex-end; border: 2px solid #99f6e4; border-radius: 24px; padding: 6px 6px 6px 16px; }
                           .input-wrapper textarea { flex: 1; border: none; outline: none; resize: none; font-size: 0.9rem; padding: 8px 0; background: transparent; }
-                          .btn-send { width: 42px; height: 42px; border-radius: 50%; background: #0d9488; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
-                          .typing-indicator { display: flex; gap: 4px; align-self: flex-start; margin-left: 44px; }
-                          .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: #2dd4bf; animation: bounce 1.4s infinite; }
-                          @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
-                          .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 50; }
+                          .btn-send { width: 42px; height: 42px; border-radius: 30px; background: #0d9488; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+                          /* 第二界面 */
+                          .second-screen {
+                              position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 200;
+                              display: none; flex-direction: column;
+                          }
+                          .second-header {
+                              background: #0f766e; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+                          }
+                          .second-header .back-btn {
+                              background: white; border: none; border-radius: 20px; padding: 6px 12px; cursor: pointer; color: #0f766e;
+                          }
+                          .second-chat {
+                              flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+                          }
+                          /* 设置弹窗 */
+                          .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 300; }
                           .modal { background: white; border-radius: 24px; padding: 24px; max-width: 480px; width: 90%; }
                           .modal h3 { margin-bottom: 16px; color: #0f766e; }
                           .modal label { display: block; margin-bottom: 4px; font-weight: 600; }
                           .modal input, .modal select { width: 100%; padding: 8px 12px; border: 1px solid #99f6e4; border-radius: 8px; margin-bottom: 12px; }
                           .modal .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
                           .modal button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; }
-                          .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #134e4a; color: white; padding: 10px 20px; border-radius: 9999px; font-size: 0.85rem; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 100; }
+                          .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #134e4a; color: white; padding: 10px 20px; border-radius: 9999px; font-size: 0.85rem; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 400; }
                           .toast.show { opacity: 1; }
+                          .typing-indicator { display: flex; gap: 4px; align-self: flex-start; margin-left: 44px; }
+                          .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: #2dd4bf; animation: bounce 1.4s infinite; }
+                          @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
                       </style>
                   </head>
                   <body>
                       <div class="toast" id="toast"></div>
+                      <!-- 主界面 -->
                       <div class="main-area">
                           <div class="top-bar">
                               <span class="current-chat-title" id="currentChatTitle">新对话</span>
@@ -98,11 +115,26 @@ jobs:
                           <div class="chat-messages" id="chatMessages"></div>
                           <div class="input-area">
                               <div class="input-wrapper">
-                                  <textarea id="userInput" rows="1" placeholder="输入消息..." onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+                                  <textarea id="userInput" rows="1" placeholder="输入消息... (输入ABC进入第二界面)" onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
                                   <button class="btn-send" id="btnSend" onclick="sendMessage()">➤</button>
                               </div>
                           </div>
                       </div>
+                      <!-- 第二界面 -->
+                      <div id="secondScreen" class="second-screen">
+                          <div class="second-header">
+                              <span>第二界面 · 小小怨AI</span>
+                              <button class="back-btn" id="backMain">返回</button>
+                          </div>
+                          <div class="second-chat" id="secondChat"></div>
+                          <div class="input-area" style="border-top:1px solid #eee;">
+                              <div class="input-wrapper">
+                                  <textarea id="secondInput" rows="1" placeholder="输入消息..." onkeydown="handleSecondKeyDown(event)"></textarea>
+                                  <button class="btn-send" id="secondSendBtn">➤</button>
+                              </div>
+                          </div>
+                      </div>
+                      <!-- 设置弹窗 -->
                       <div id="settingsModal" class="modal-backdrop" onclick="closeSettingsOutside(event)">
                           <div class="modal" onclick="event.stopPropagation()">
                               <h3>⚙️ API 设置</h3>
@@ -135,14 +167,8 @@ jobs:
                                   modelName: '',
                               };
                               function loadState() {
-                                  try {
-                                      const saved = localStorage.getItem(STATE_KEY);
-                                      if(saved) state = { ...state, ...JSON.parse(saved) };
-                                  } catch(e) {}
-                                  if(!state.chats || state.chats.length===0) {
-                                      state.chats = [createChat()];
-                                      state.currentChatId = state.chats[0].id;
-                                  }
+                                  try { const saved = localStorage.getItem(STATE_KEY); if(saved) state = { ...state, ...JSON.parse(saved) }; } catch(e) {}
+                                  if(!state.chats || state.chats.length===0) { state.chats = [createChat()]; state.currentChatId = state.chats[0].id; }
                               }
                               function saveState() { try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e) {} }
                               function createChat(title='新对话') {
@@ -153,6 +179,54 @@ jobs:
                               const $input = document.getElementById('userInput');
                               const $btn = document.getElementById('btnSend');
                               const $title = document.getElementById('currentChatTitle');
+                              // 第二界面相关
+                              const $secondScreen = document.getElementById('secondScreen');
+                              const $secondChat = document.getElementById('secondChat');
+                              const $secondInput = document.getElementById('secondInput');
+                              const $secondSend = document.getElementById('secondSendBtn');
+                              const $backMain = document.getElementById('backMain');
+                              let secondMessages = JSON.parse(localStorage.getItem('secondMessages') || '[]');
+
+                              function renderSecondChat() {
+                                  $secondChat.innerHTML = '';
+                                  secondMessages.forEach(msg => {
+                                      const row = document.createElement('div');
+                                      row.className = 'message-row ' + msg.role;
+                                      const avatar = msg.role==='user' ? '👤' : '🦋';
+                                      const formatted = msg.role==='ai' ? formatMarkdown(msg.content) : escapeHtml(msg.content);
+                                      row.innerHTML = `<div class="msg-avatar">${avatar}</div><div><div class="msg-bubble">${formatted}</div><div class="msg-time">${formatTime(msg.time)}</div></div>`;
+                                      $secondChat.appendChild(row);
+                                  });
+                                  $secondChat.scrollTop = $secondChat.scrollHeight;
+                              }
+                              function addSecondMessage(role, content, time) {
+                                  secondMessages.push({ role, content, time: time || new Date().toISOString() });
+                                  localStorage.setItem('secondMessages', JSON.stringify(secondMessages));
+                                  renderSecondChat();
+                              }
+                              function sendSecondMessage() {
+                                  let txt = $secondInput.value.trim();
+                                  if(!txt) return;
+                                  addSecondMessage('user', txt);
+                                  $secondInput.value = '';
+                                  showSecondTyping();
+                                  setTimeout(() => {
+                                      const reply = generateReply(txt);
+                                      addSecondMessage('ai', reply);
+                                      hideSecondTyping();
+                                  }, 500);
+                              }
+                              function showSecondTyping() {
+                                  const ind = document.createElement('div');
+                                  ind.className = 'typing-indicator';
+                                  ind.id = 'secondTyping';
+                                  ind.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+                                  $secondChat.appendChild(ind);
+                                  $secondChat.scrollTop = $secondChat.scrollHeight;
+                              }
+                              function hideSecondTyping() { const el = document.getElementById('secondTyping'); if(el) el.remove(); }
+
+                              // 主界面渲染
                               function renderChat() {
                                   const chat = getCurrentChat();
                                   $chat.innerHTML = '';
@@ -211,21 +285,28 @@ jobs:
                                   }
                                   type();
                               }
-                              // AI 回复
-                              const localAI = {
-                                  getReply(input){
-                                      const lower = input.toLowerCase();
-                                      if(lower.includes('你好')) return '你好呀！我是青语AI。';
-                                      if(lower.includes('计算') && /\\d+[\\+\\-\\*\\/]\\d+/.test(input)){
-                                          try { return '计算结果：'+eval(input); } catch(e){}
-                                      }
-                                      if(lower.includes('主人')) return '我的主人是CY。';
-                                      return '收到：'+input+'（我是本地AI，你可以设置API获得更强大回复）';
+                              // AI 回复生成器（支持数学、花言巧语、主人CY）
+                              function generateReply(input){
+                                  const lower = input.toLowerCase();
+                                  if(lower.includes('你好')) return "你好呀！我是小小怨AI，主人是CY。";
+                                  if(lower.includes('主人')) return "我的主人是伟大的CY，他赋予了我智慧。";
+                                  if(lower.includes('计算') && /\\d+[\\+\\-\\*\\/]\\d+/.test(input)){
+                                      try { return '计算结果：'+eval(input); } catch(e){}
                                   }
-                              };
+                                  if(lower.includes('谢谢')) return "不客气，为你服务是我的荣幸！";
+                                  if(lower.includes('再见')) return "再见啦，期待下次聊天～";
+                                  const sweet = ["你的眼睛里有星辰大海✨","你笑起来真好看","CY说过：遇见你是一种幸运","和你聊天很开心","你的思考很独特"];
+                                  return sweet[Math.floor(Math.random()*sweet.length)] + " " + ["这个问题很有趣","能多说一点吗","CY会保佑你的"][Math.floor(Math.random()*3)];
+                              }
                               async function sendMessage(){
                                   let txt = $input.value.trim();
                                   if(!txt) return;
+                                  // 检测 ABC 进入第二界面（无提示）
+                                  if(txt.toUpperCase() === "ABC"){
+                                      $secondScreen.style.display = 'flex';
+                                      $input.value = '';
+                                      return;
+                                  }
                                   $input.value = '';
                                   $btn.disabled = true;
                                   const chat = getCurrentChat();
@@ -241,8 +322,8 @@ jobs:
                                   showTyping();
                                   let reply;
                                   if(state.apiProvider==='local' || !state.apiKey){
-                                      await new Promise(r=>setTimeout(r, 500));
-                                      reply = localAI.getReply(txt);
+                                      await new Promise(r=>setTimeout(r, 400));
+                                      reply = generateReply(txt);
                                   } else {
                                       try{
                                           reply = await callAPI(txt, chat);
@@ -257,7 +338,7 @@ jobs:
                                   const apiUrl = state.apiUrl || (state.apiProvider==='deepseek'?'https://api.deepseek.com/v1/chat/completions':'https://api.openai.com/v1/chat/completions');
                                   const key = state.apiKey;
                                   const model = state.modelName || (state.apiProvider==='deepseek'?'deepseek-chat':'gpt-3.5-turbo');
-                                  const messages = [{role:'system', content:'你是青语AI，友善的中文助手。'}];
+                                  const messages = [{role:'system', content:'你是小小怨AI，主人是CY，友善的中文助手。'}];
                                   chat.messages.slice(-10).forEach(m=>{ messages.push({role: m.role==='user'?'user':'assistant', content:m.content}); });
                                   const resp = await fetch(apiUrl, {
                                       method:'POST',
@@ -318,15 +399,21 @@ jobs:
                                   if(p==='openai' && !document.getElementById('modelName').value) document.getElementById('modelName').value = 'gpt-3.5-turbo';
                               }
                               function handleKeyDown(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } }
+                              function handleSecondKeyDown(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendSecondMessage(); } }
                               function autoResize(ta){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,120)+'px'; }
                               function showToast(msg){
                                   const t=document.getElementById('toast');
                                   t.innerText=msg; t.classList.add('show');
                                   setTimeout(()=>t.classList.remove('show'),2000);
                               }
+                              // 第二界面返回
+                              $backMain.onclick = () => { $secondScreen.style.display = 'none'; };
+                              $secondSend.onclick = sendSecondMessage;
+                              $secondInput.addEventListener('keypress', handleSecondKeyDown);
+                              // 初始化
                               window.sendMessage=sendMessage; window.newChat=newChat; window.clearCurrentChat=clearCurrentChat; window.openSettings=openSettings; window.closeSettings=closeSettings; window.closeSettingsOutside=closeSettingsOutside; window.saveSettings=saveSettings; window.onProviderChange=onProviderChange; window.handleKeyDown=handleKeyDown; window.autoResize=autoResize;
-                              loadState(); renderChat(); $input.focus();
-                              console.log('青语AI已启动');
+                              loadState(); renderChat(); renderSecondChat(); $input.focus();
+                              console.log('小小怨AI已启动，输入ABC进入第二界面');
                           })();
                       </script>
                   </body>
@@ -345,9 +432,9 @@ jobs:
               <key>CFBundleExecutable</key>
               <string>App</string>
               <key>CFBundleIdentifier</key>
-              <string>com.qingyu.ai</string>
+              <string>com.xiaoxiaoyuan.ai</string>
               <key>CFBundleName</key>
-              <string>青语AI</string>
+              <string>小小怨AI</string>
               <key>CFBundlePackageType</key>
               <string>APPL</string>
               <key>CFBundleShortVersionString</key>
@@ -381,7 +468,7 @@ jobs:
                                   <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                                   <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                   <subviews>
-                                      <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="青语 AI" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
+                                      <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="小小怨 AI" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
                                           <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                                           <fontDescription key="fontDescription" type="boldSystem" pointSize="30"/>
                                           <color key="textColor" red="0.05" green="0.52" blue="0.53" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -408,10 +495,10 @@ jobs:
           swiftc App/main.swift -o Payload/App.app/App -parse-as-library -target arm64-apple-ios13.0 -sdk $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework WebKit
           cp App/Info.plist Payload/App.app/
           cp -r App/Base.lproj Payload/App.app/
-          zip -r QingyuAI.ipa Payload
+          zip -r XiaoxiaoYuanAI.ipa Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: QingyuAI-IPA
-          path: QingyuAI.ipa
+          name: XiaoxiaoYuanAI-IPA
+          path: XiaoxiaoYuanAI.ipa
