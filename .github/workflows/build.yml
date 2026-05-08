@@ -69,17 +69,6 @@ jobs:
                           }
                           @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
                           @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
-                          /* 侧边栏 */
-                          .sidebar {
-                              position: fixed; left: 0; top: 0; width: 280px; height: 100%; background: #0f766e; transform: translateX(-100%);
-                              transition: 0.3s; z-index: 100; padding: 20px 16px; color: white; display: flex; flex-direction: column; gap: 16px;
-                          }
-                          .sidebar.open { transform: translateX(0); }
-                          .sidebar h3 { font-size: 18px; margin-bottom: 4px; }
-                          .sidebar button {
-                              background: rgba(255,255,255,0.2); border: none; border-radius: 30px; padding: 12px;
-                              color: white; font-size: 16px; cursor: pointer; width: 100%; text-align: center;
-                          }
                           /* 主界面 */
                           .main {
                               width: 100%; height: 100%; display: flex; flex-direction: column; background: #f0fdfa;
@@ -129,15 +118,6 @@ jobs:
                       <!-- 启动动画 -->
                       <div id="splash" class="splash"><div class="scan-circle"><div class="scan-line"></div></div></div>
 
-                      <!-- 侧边栏 -->
-                      <div id="sidebar" class="sidebar">
-                          <h3>小小怨AI</h3>
-                          <button id="newBtn">✨ 新建对话</button>
-                          <button id="clearBtn">🗑️ 清空当前</button>
-                          <button id="exportBtn">📥 导出对话</button>
-                          <button id="closeSidebar">✕ 关闭菜单</button>
-                      </div>
-
                       <!-- 第二界面 -->
                       <div id="second" class="second">
                           <div class="header"><span>第二界面</span><button class="back" id="backMain">返回</button></div>
@@ -153,7 +133,6 @@ jobs:
                       <!-- 主聊天界面 -->
                       <div class="main">
                           <div class="top">
-                              <button class="icon-btn" id="menuBtn">☰</button>
                               <span class="title">小小怨AI</span>
                               <button class="icon-btn" id="settingsBtn">⚙️</button>
                           </div>
@@ -169,25 +148,7 @@ jobs:
                               // 移除启动动画
                               setTimeout(()=>{ let s=document.getElementById('splash'); if(s) s.remove(); },2000);
 
-                              // 侧边栏滑动逻辑
-                              const sidebar = document.getElementById('sidebar');
-                              const menuBtn = document.getElementById('menuBtn');
-                              const closeSidebar = document.getElementById('closeSidebar');
-                              let isOpen = false;
-                              function open(){ sidebar.classList.add('open'); isOpen=true; }
-                              function close(){ sidebar.classList.remove('open'); isOpen=false; }
-                              menuBtn.onclick = () => isOpen ? close() : open();
-                              closeSidebar.onclick = close;
-                              let startX=0;
-                              document.body.addEventListener('touchstart',e=>{ startX=e.touches[0].clientX; },{passive:false});
-                              document.body.addEventListener('touchmove',e=>{
-                                  let delta=e.touches[0].clientX-startX;
-                                  if(startX<30 && delta>20 && !isOpen){ open(); e.preventDefault(); }
-                                  if(delta<-20 && isOpen){ close(); e.preventDefault(); }
-                              },{passive:false});
-                              document.addEventListener('click',e=>{ if(isOpen && !sidebar.contains(e.target) && e.target!==menuBtn) close(); });
-
-                              // ---------- 聊天核心（与之前工作版本完全一致） ----------
+                              // ---------- 聊天核心 ----------
                               let mainMsgs = JSON.parse(localStorage.getItem('mainMsgs')||'[]');
                               let secondMsgs = JSON.parse(localStorage.getItem('secondMsgs')||'[]');
                               const mainChat = document.getElementById('mainChat');
@@ -241,7 +202,7 @@ jobs:
                               function addMain(role,content){ mainMsgs.push({role,content}); renderMain(); }
                               function addSecond(role,content){ secondMsgs.push({role,content}); renderSecond(); }
 
-                              // 主界面发送（和之前工作版一模一样）
+                              // 主界面发送
                               function sendMain(){
                                   let t = mainInput.value.trim();
                                   if(!t) return;
@@ -263,28 +224,9 @@ jobs:
                               mainInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendMain(); });
                               secondInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendSecond(); });
 
-                              // 侧边栏按钮功能
-                              document.getElementById('newBtn').onclick = ()=>{
-                                  if(mainMsgs.length>0 && confirm('新建会清空当前对话')){ mainMsgs=[]; renderMain(); addMain('ai','新对话已创建'); }
-                                  close();
-                              };
-                              document.getElementById('clearBtn').onclick = ()=>{
-                                  if(mainMsgs.length>0 && confirm('清空当前对话？')){ mainMsgs=[]; renderMain(); addMain('ai','对话已清空'); }
-                                  close();
-                              };
-                              document.getElementById('exportBtn').onclick = ()=>{
-                                  if(mainMsgs.length===0){ alert('无内容可导出'); return; }
-                                  let text = "小小怨AI对话\\n"+new Date().toLocaleString()+"\\n";
-                                  mainMsgs.forEach(m=>{ text += (m.role==='user'?'我：':'AI：')+m.content+'\\n'; });
-                                  let a=document.createElement('a');
-                                  a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));
-                                  a.download='chat.txt';
-                                  a.click();
-                                  close();
-                              };
                               // 设置弹窗
                               const settingsModal = document.getElementById('settingsModal');
-                              document.getElementById('settingsBtn').onclick = ()=>{ settingsModal.style.display='flex'; close(); };
+                              document.getElementById('settingsBtn').onclick = ()=>{ settingsModal.style.display='flex'; };
                               document.getElementById('closeModal').onclick = ()=>{ settingsModal.style.display='none'; };
                               document.getElementById('clearAllBtn').onclick = ()=>{
                                   if(confirm('清除所有记录（主界面和第二界面）？')){ mainMsgs=[]; secondMsgs=[]; renderMain(); renderSecond(); addMain('ai','所有记录已清空'); settingsModal.style.display='none'; }
@@ -292,8 +234,8 @@ jobs:
                               window.onclick = e=>{ if(e.target===settingsModal) settingsModal.style.display='none'; };
                               document.getElementById('backMain').onclick = ()=>{ document.getElementById('second').style.display='none'; };
 
-                              // 初始化一条欢迎消息
-                              if(mainMsgs.length===0){ addMain('ai','你好！我是小小怨AI，主人是CY。左滑打开菜单，输入ABC进入第二界面。'); }
+                              // 初始消息
+                              if(mainMsgs.length===0){ addMain('ai','你好！我是小小怨AI，主人是CY。输入ABC进入第二界面。'); }
                               renderMain(); renderSecond();
                           })();
                       </script>
