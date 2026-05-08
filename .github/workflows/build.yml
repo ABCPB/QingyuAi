@@ -168,6 +168,7 @@ jobs:
                                   return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                               }
                               function showTyping(container) {
+                                  hideTyping();
                                   const typingDiv = document.createElement('div');
                                   typingDiv.className = 'typing';
                                   typingDiv.id = 'typing';
@@ -214,6 +215,7 @@ jobs:
                                   }
                               }
 
+                              // 主界面发送
                               function sendMessage() {
                                   let txt = input.value.trim();
                                   if(!txt) return;
@@ -231,6 +233,7 @@ jobs:
                                       addMessage('ai', reply);
                                   }, 500);
                               }
+                              // 第二界面发送
                               function sendSecondMessage() {
                                   let txt = secondInput.value.trim();
                                   if(!txt) return;
@@ -267,11 +270,21 @@ jobs:
                                       settingsModal.style.display = 'none';
                                   }
                               }
-                              // 事件绑定
+                              // 事件绑定（双重保障）
                               sendBtn.onclick = sendMessage;
                               secondSendBtn.onclick = sendSecondMessage;
-                              input.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
-                              secondInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendSecondMessage(); });
+                              input.addEventListener('keypress', function(e) {
+                                  if(e.key === 'Enter') {
+                                      e.preventDefault();
+                                      sendMessage();
+                                  }
+                              });
+                              secondInput.addEventListener('keypress', function(e) {
+                                  if(e.key === 'Enter') {
+                                      e.preventDefault();
+                                      sendSecondMessage();
+                                  }
+                              });
                               newBtn.onclick = newChat;
                               clearBtn.onclick = clearCurrentChat;
                               settingsBtn.onclick = () => { settingsModal.style.display = 'flex'; };
